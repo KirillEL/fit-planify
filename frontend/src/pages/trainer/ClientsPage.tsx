@@ -13,16 +13,17 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [newName, setNewName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [creating, setCreating] = useState(false)
   const [confirmClient, setConfirmClient] = useState<Client | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    getClients().then((r) => {
-      setClients(r.data)
-      setLoading(false)
-    })
+    getClients()
+      .then((r) => setClients(r.data))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
   }, [])
 
   const handleCreate = async () => {
@@ -47,6 +48,7 @@ export default function ClientsPage() {
   }
 
   if (loading) return <div className={s.loader}>Загрузка...</div>
+  if (error) return <div className={s.loader}>Ошибка загрузки. Обновите страницу.</div>
 
   return (
     <div className={s.page}>

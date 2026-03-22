@@ -8,6 +8,17 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+http.interceptors.response.use(
+  (r) => r,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token')
+      window.location.reload()
+    }
+    return Promise.reject(error)
+  }
+)
+
 // Auth
 export const authTelegram = (initData: string) =>
   axios.post<{ token: string }>('/auth/telegram', { init_data: initData })
