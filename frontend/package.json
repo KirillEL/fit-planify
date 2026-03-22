@@ -1,0 +1,27 @@
+{
+  "name": "planify-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@telegram-apps/sdk": "^2.0.0",
+    "@telegram-apps/telegram-ui": "^2.0.0",
+    "axios": "^1.7.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.24.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "sass": "^1.98.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.4"
+  }
+}

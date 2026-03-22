@@ -1,0 +1,37 @@
+@use '../../styles/variables' as *;
+
+.message {
+  font-size: 15px;
+  line-height: 1.4;
+  color: $tg-text;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+
+  button {
+    flex: 1;
+    padding: 11px;
+    border-radius: $radius-md;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 500;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.cancel {
+  background: $tg-secondary-bg;
+  color: $tg-text;
+}
+
+.confirm {
+  background: $color-danger;
+  color: #fff;
+}

@@ -1,0 +1,55 @@
+// Telegram theme tokens mapped to SCSS variables
+$tg-bg: var(--tg-theme-bg-color, #ffffff);
+$tg-text: var(--tg-theme-text-color, #000000);
+$tg-hint: var(--tg-theme-hint-color, #999999);
+$tg-secondary-bg: var(--tg-theme-secondary-bg-color, #f5f5f5);
+$tg-button: var(--tg-theme-button-color, #3390ec);
+$tg-button-text: var(--tg-theme-button-text-color, #ffffff);
+
+// Semantic colors
+$color-danger: #ff453a;
+$color-success: #30d158;
+$color-warning: #ff9f0a;
+
+// Border radius
+$radius-sm: 8px;
+$radius-md: 10px;
+$radius-lg: 12px;
+
+// Mixins
+@mixin flex-col($gap: 0) {
+  display: flex;
+  flex-direction: column;
+  @if $gap > 0 { gap: #{$gap}px; }
+}
+
+@mixin flex-row($gap: 0) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  @if $gap > 0 { gap: #{$gap}px; }
+}
+
+@mixin card {
+  background: $tg-secondary-bg;
+  border-radius: $radius-lg;
+  padding: 14px;
+}
+
+@mixin button-base {
+  padding: 10px 14px;
+  border-radius: $radius-md;
+  border: none;
+  background: $tg-button;
+  color: $tg-button-text;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

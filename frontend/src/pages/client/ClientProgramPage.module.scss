@@ -1,0 +1,54 @@
+@use '../../styles/variables' as *;
+
+.page {
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+}
+
+.dayCard {
+  background: $tg-secondary-bg;
+  border-radius: $radius-lg;
+  padding: 14px;
+  margin-bottom: 12px;
+
+  h2 {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+}
+
+.exerciseTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    color: $tg-hint;
+    font-weight: 500;
+    padding: 4px 0;
+  }
+
+  td {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+}
+
+.note {
+  font-size: 11px;
+  color: $tg-hint;
+}
+
+.loader,
+.error {
+  text-align: center;
+  padding: 40px;
+  color: $tg-hint;
+}

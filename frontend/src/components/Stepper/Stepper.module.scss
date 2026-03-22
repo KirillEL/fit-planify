@@ -1,0 +1,59 @@
+@use '../../styles/variables' as *;
+
+.wrapper {
+  @include flex-col(6);
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $tg-hint;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $tg-secondary-bg;
+  border-radius: $radius-md;
+  border: 1px solid $tg-hint;
+  overflow: hidden;
+  height: 44px;
+}
+
+.btn {
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: $tg-button;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+
+  &:disabled {
+    color: $tg-hint;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+.value {
+  font-size: 17px;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+.error {
+  font-size: 12px;
+  color: $color-danger;
+}

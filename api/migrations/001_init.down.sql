@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS exercises;
+DROP TABLE IF EXISTS workout_days;
+DROP TABLE IF EXISTS programs;
+DROP TABLE IF EXISTS clients;
+DROP TABLE IF EXISTS trainers;

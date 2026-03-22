@@ -1,0 +1,49 @@
+@use '../../styles/variables' as *;
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: $tg-bg;
+  border-radius: $radius-lg $radius-lg 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 20px 16px 32px;
+}
+
+.header {
+  @include flex-row;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: $tg-hint;
+  padding: 4px;
+  line-height: 1;
+  border-radius: $radius-sm;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.body {
+  @include flex-col(12);
+}
