@@ -13,7 +13,11 @@ export default function ConfirmDialog({ message, onConfirm, onCancel }: Props) {
 
   const handleConfirm = async () => {
     setLoading(true)
-    await onConfirm()
+    try {
+      await onConfirm()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

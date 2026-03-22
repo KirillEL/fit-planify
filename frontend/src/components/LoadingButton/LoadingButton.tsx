@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 import s from './LoadingButton.module.scss'
 
-type Variant = 'primary' | 'danger' | 'secondary' | 'sm' | 'smDanger'
+type Variant = 'primary' | 'danger' | 'secondary' | 'sm' | 'smDanger' | 'smSecondary'
 
 interface Props {
   loading?: boolean

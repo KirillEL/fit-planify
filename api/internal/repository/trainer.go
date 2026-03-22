@@ -18,6 +18,12 @@ func (r *TrainerRepo) Upsert(t *model.Trainer) error {
 	return err
 }
 
+func (r *TrainerRepo) GetByID(id int64) (*model.Trainer, error) {
+	var t model.Trainer
+	err := r.db.Get(&t, `SELECT * FROM trainers WHERE id = $1`, id)
+	return &t, err
+}
+
 func (r *TrainerRepo) GetByTelegramID(telegramID int64) (*model.Trainer, error) {
 	var t model.Trainer
 	err := r.db.Get(&t, `SELECT * FROM trainers WHERE telegram_id = $1`, telegramID)

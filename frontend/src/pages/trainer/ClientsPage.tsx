@@ -11,6 +11,7 @@ const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'fit_planify_bot'
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
+  const [search, setSearch] = useState('')
   const [newName, setNewName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -63,6 +64,15 @@ export default function ClientsPage() {
 
       <h1>Мои клиенты</h1>
 
+      {clients.length > 0 && (
+        <input
+          className={s.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Поиск по имени..."
+        />
+      )}
+
       <div className={s.addRow}>
         <input
           value={newName}
@@ -87,7 +97,7 @@ export default function ClientsPage() {
         </div>
       ) : (
         <ul className={s.clientList}>
-          {clients.map((c) => (
+          {clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase())).map((c) => (
             <li key={c.id} className={s.clientCard}>
               <div className={s.clientInfo} onClick={() => navigate(`/trainer/clients/${c.id}`)}>
                 <span className={s.clientName}>{c.name}</span>

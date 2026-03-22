@@ -28,8 +28,20 @@ func (r *ProgramRepo) GetByID(id int64) (*model.Program, error) {
 	return &p, err
 }
 
-func (r *ProgramRepo) Delete(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM programs WHERE id = $1`, id)
+// Delete removes a program only if it belongs to a client owned by trainerID.
+func (r *ProgramRepo) Delete(id, trainerID int64) error {
+	_, err := r.db.Exec(`
+		DELETE FROM programs WHERE id = $1
+		AND client_id IN (SELECT id FROM clients WHERE trainer_id = $2)
+	`, id, trainerID)
+	return err
+}
+
+func (r *ProgramRepo) Update(id, trainerID int64, title string) error {
+	_, err := r.db.Exec(`
+		UPDATE programs SET title = $1 WHERE id = $2
+		AND client_id IN (SELECT id FROM clients WHERE trainer_id = $3)
+	`, title, id, trainerID)
 	return err
 }
 
@@ -46,8 +58,28 @@ func (r *ProgramRepo) GetDays(programID int64) ([]model.WorkoutDay, error) {
 	return days, err
 }
 
-func (r *ProgramRepo) DeleteDay(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM workout_days WHERE id = $1`, id)
+// DeleteDay removes a day only if its program belongs to trainerID.
+func (r *ProgramRepo) DeleteDay(id, trainerID int64) error {
+	_, err := r.db.Exec(`
+		DELETE FROM workout_days WHERE id = $1
+		AND program_id IN (
+			SELECT p.id FROM programs p
+			JOIN clients c ON c.id = p.client_id
+			WHERE c.trainer_id = $2
+		)
+	`, id, trainerID)
+	return err
+}
+
+func (r *ProgramRepo) UpdateDay(id, trainerID int64, title string) error {
+	_, err := r.db.Exec(`
+		UPDATE workout_days SET title = $1 WHERE id = $2
+		AND program_id IN (
+			SELECT p.id FROM programs p
+			JOIN clients c ON c.id = p.client_id
+			WHERE c.trainer_id = $3
+		)
+	`, title, id, trainerID)
 	return err
 }
 
@@ -65,7 +97,30 @@ func (r *ProgramRepo) GetExercises(dayID int64) ([]model.Exercise, error) {
 	return exercises, err
 }
 
-func (r *ProgramRepo) DeleteExercise(id int64) error {
-	_, err := r.db.Exec(`DELETE FROM exercises WHERE id = $1`, id)
+// DeleteExercise removes an exercise only if it belongs to a day in a trainer's program.
+func (r *ProgramRepo) DeleteExercise(id, trainerID int64) error {
+	_, err := r.db.Exec(`
+		DELETE FROM exercises WHERE id = $1
+		AND workout_day_id IN (
+			SELECT d.id FROM workout_days d
+			JOIN programs p ON p.id = d.program_id
+			JOIN clients c ON c.id = p.client_id
+			WHERE c.trainer_id = $2
+		)
+	`, id, trainerID)
+	return err
+}
+
+func (r *ProgramRepo) UpdateExercise(id, trainerID int64, e model.Exercise) error {
+	_, err := r.db.Exec(`
+		UPDATE exercises SET name=$1, sets=$2, reps=$3, weight=$4, note=$5
+		WHERE id = $6
+		AND workout_day_id IN (
+			SELECT d.id FROM workout_days d
+			JOIN programs p ON p.id = d.program_id
+			JOIN clients c ON c.id = p.client_id
+			WHERE c.trainer_id = $7
+		)
+	`, e.Name, e.Sets, e.Reps, e.Weight, e.Note, id, trainerID)
 	return err
 }

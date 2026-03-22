@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { getProgram } from '../../api/client'
 import type { Program } from '../../types'
 import s from './ClientProgramPage.module.scss'
@@ -21,6 +21,7 @@ export default function ClientProgramPage() {
 
   return (
     <div className={s.page}>
+      <Link to="/client/programs" className={s.back}>← Мои программы</Link>
       <h1>💪 {program.title}</h1>
 
       {program.workout_days?.map((day) => (

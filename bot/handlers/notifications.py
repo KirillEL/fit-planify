@@ -1,38 +1,63 @@
+import logging
+import os
+
 from aiogram import Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from services.api_client import api
-import os
 
-TRAINER_TELEGRAM_IDS: list[int] = []  # Загружать из БД при необходимости
+logger = logging.getLogger(__name__)
 
 
-async def notify_unpaid(bot: Bot, trainer_telegram_id: int):
-    payments = await api.get_unpaid_payments(trainer_telegram_id)
-    if not payments:
+async def send_payment_reminders(bot: Bot):
+    try:
+        data = await api.get_payment_reminders()
+    except Exception as e:
+        logger.error(f"Failed to fetch payment reminders: {e}")
         return
 
-    lines = [f"💳 <b>Неоплаченные клиенты:</b>\n"]
-    for p in payments:
-        lines.append(f"• Клиент #{p['client_id']} — {p['amount']} ₽")
+    # Notify trainers
+    for trainer in data.get("trainers", []):
+        tg_id = trainer["trainer_telegram_id"]
+        lines = ["💳 <b>Напоминание об оплатах</b>\n"]
+        total = 0
+        for c in trainer["unpaid_clients"]:
+            note = f" ({c['note']})" if c.get("note") else ""
+            lines.append(f"• {c['client_name']} — {c['amount']:.0f} ₽{note}")
+            total += c["amount"]
+        lines.append(f"\n<b>Итого: {total:.0f} ₽</b>")
+        try:
+            await bot.send_message(chat_id=tg_id, text="\n".join(lines), parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Failed to notify trainer {tg_id}: {e}")
 
-    await bot.send_message(
-        chat_id=trainer_telegram_id,
-        text="\n".join(lines),
-        parse_mode="HTML",
-    )
+    # Notify connected clients
+    for client in data.get("clients", []):
+        tg_id = client["client_telegram_id"]
+        note = f" ({client['note']})" if client.get("note") else ""
+        text = (
+            f"💳 <b>Напоминание об оплате</b>\n\n"
+            f"Привет, {client['client_name']}! Тренер ожидает оплату "
+            f"на сумму <b>{client['amount']:.0f} ₽</b>{note}.\n\n"
+            f"Пожалуйста, свяжитесь с тренером для уточнения деталей."
+        )
+        try:
+            await bot.send_message(chat_id=tg_id, text=text, parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Failed to notify client {tg_id}: {e}")
 
 
 def setup_scheduler(bot: Bot) -> AsyncIOScheduler:
-    scheduler = AsyncIOScheduler(timezone="Asia/Novosibirsk")
+    tz = os.getenv("TZ", "Asia/Novosibirsk")
+    scheduler = AsyncIOScheduler(timezone=tz)
 
-    # Каждый понедельник в 10:00 — напоминание об оплатах
+    # Каждый понедельник в 10:00
     scheduler.add_job(
-        notify_unpaid,
+        send_payment_reminders,
         trigger="cron",
         day_of_week="mon",
         hour=10,
         minute=0,
-        kwargs={"bot": bot, "trainer_telegram_id": 0},  # замени на реальный ID
+        kwargs={"bot": bot},
     )
 
     return scheduler

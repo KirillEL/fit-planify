@@ -33,7 +33,9 @@ export const getClients = () => http.get('/clients')
 export const getClient = (id: number) => http.get(`/clients/${id}`)
 export const createClient = (name: string) => http.post('/clients', { name })
 export const deleteClient = (id: number) => http.delete(`/clients/${id}`)
+export const updateClient = (id: number, name: string) => http.put(`/clients/${id}`, { name })
 export const getClientByToken = (token: string) => axios.get(`/invite/${token}`)
+export const getClientProgramsByToken = (token: string) => axios.get(`/invite/${token}/programs`)
 
 // Programs
 export const getClientPrograms = (clientId: number) =>
@@ -42,11 +44,13 @@ export const createProgram = (clientId: number, title: string) =>
   http.post(`/clients/${clientId}/programs`, { title })
 export const getProgram = (id: number) => http.get(`/programs/${id}`)
 export const deleteProgram = (id: number) => http.delete(`/programs/${id}`)
+export const updateProgram = (id: number, title: string) => http.put(`/programs/${id}`, { title })
 
 // Days
 export const addDay = (programId: number, day_number: number, title: string) =>
   http.post(`/programs/${programId}/days`, { day_number, title })
 export const deleteDay = (id: number) => http.delete(`/days/${id}`)
+export const updateDay = (id: number, title: string) => http.put(`/days/${id}`, { title })
 
 // Exercises
 export const addExercise = (
@@ -54,6 +58,10 @@ export const addExercise = (
   data: { name: string; sets: number; reps: number; weight: number; note: string }
 ) => http.post(`/days/${dayId}/exercises`, data)
 export const deleteExercise = (id: number) => http.delete(`/exercises/${id}`)
+export const updateExercise = (
+  id: number,
+  data: { name: string; sets: number; reps: number; weight: number; note: string }
+) => http.put(`/exercises/${id}`, data)
 
 // Payments
 export const getPayments = (clientId: number) =>

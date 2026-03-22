@@ -4,6 +4,7 @@ import { authDev, authTelegram } from './api/client'
 import ClientDetailPage from './pages/trainer/ClientDetailPage'
 import ClientsPage from './pages/trainer/ClientsPage'
 import ClientProgramPage from './pages/client/ClientProgramPage'
+import ClientProgramListPage from './pages/client/ClientProgramListPage'
 import Onboarding from './components/Onboarding/Onboarding'
 
 declare global {
@@ -73,6 +74,7 @@ function App() {
         <Routes>
           <Route path="/trainer" element={<ClientsPage />} />
           <Route path="/trainer/clients/:id" element={<ClientDetailPage />} />
+          <Route path="/client/programs" element={<ClientProgramListPage />} />
           <Route path="/client/program/:programId" element={<ClientProgramPage />} />
           <Route path="*" element={<Navigate to="/trainer" replace />} />
         </Routes>

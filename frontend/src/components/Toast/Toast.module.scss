@@ -14,6 +14,10 @@
   white-space: nowrap;
   pointer-events: none;
   animation: slideDown 0.2s ease;
+
+  &.error {
+    background: #d32f2f;
+  }
 }
 
 @keyframes slideDown {

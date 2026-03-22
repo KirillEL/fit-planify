@@ -11,6 +11,14 @@
   }
 }
 
+.back {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: $tg-hint;
+  font-size: 14px;
+  text-decoration: none;
+}
+
 .dayCard {
   background: $tg-secondary-bg;
   border-radius: $radius-lg;

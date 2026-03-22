@@ -2,6 +2,7 @@ import httpx
 import os
 
 API_URL = os.getenv("API_URL", "http://api:8080")
+BOT_SECRET = os.getenv("BOT_SECRET", "")
 
 
 class APIClient:
@@ -15,12 +16,14 @@ class APIClient:
             return r.json()
         return None
 
-    async def bind_telegram(self, token: str, telegram_id: int) -> bool:
+    async def bind_telegram(self, token: str, telegram_id: int) -> dict | None:
         r = await self.client.post(
             f"{self.base_url}/invite/{token}/bind",
             json={"telegram_id": telegram_id},
         )
-        return r.status_code == 200
+        if r.status_code == 200:
+            return r.json()
+        return None
 
     async def get_program(self, program_id: int) -> dict | None:
         r = await self.client.get(f"{self.base_url}/programs/{program_id}")
@@ -42,6 +45,15 @@ class APIClient:
         if r.status_code == 200:
             return r.json()
         return []
+
+    async def get_payment_reminders(self) -> dict:
+        r = await self.client.get(
+            f"{self.base_url}/notify/reminders",
+            headers={"X-Bot-Secret": BOT_SECRET},
+        )
+        if r.status_code == 200:
+            return r.json()
+        return {"trainers": [], "clients": []}
 
     async def close(self):
         await self.client.aclose()

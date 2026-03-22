@@ -1,15 +1,19 @@
-from aiogram import Router
+import logging
+
+from aiogram import Bot, Router
 from aiogram.filters import CommandStart, CommandObject
 from aiogram.types import Message
 
-from keyboards.trainer import main_menu, client_program_keyboard
+logger = logging.getLogger(__name__)
+
+from keyboards.trainer import main_menu, client_programs_keyboard
 from services.api_client import api
 
 router = Router()
 
 
 @router.message(CommandStart(deep_link=True))
-async def start_with_invite(message: Message, command: CommandObject):
+async def start_with_invite(message: Message, command: CommandObject, bot: Bot):
     """Клиент переходит по инвайт-ссылке: /start invite_<token>"""
     token = command.args
     if not token or not token.startswith("invite_"):
@@ -23,23 +27,25 @@ async def start_with_invite(message: Message, command: CommandObject):
         await message.answer("Ссылка недействительна или устарела.")
         return
 
-    bound = await api.bind_telegram(invite_token, message.from_user.id)
-    if not bound:
+    bind_data = await api.bind_telegram(invite_token, message.from_user.id)
+    if not bind_data:
         await message.answer("Не удалось привязать аккаунт. Попробуй позже.")
         return
 
-    programs = await api.get_client_programs(client["id"])
+    trainer_tg_id = bind_data.get("trainer_telegram_id", 0)
+    if trainer_tg_id:
+        try:
+            await bot.send_message(
+                chat_id=trainer_tg_id,
+                text=f"✅ Клиент <b>{client['name']}</b> подключился к боту!",
+                parse_mode="HTML",
+            )
+        except Exception as e:
+            logger.error(f"Failed to notify trainer {trainer_tg_id}: {e}")
 
-    if not programs:
-        await message.answer(
-            f"Привет, {client['name']}! 👋\n\nТвой тренер ещё не добавил программу. Скоро появится!"
-        )
-        return
-
-    program = programs[0]
     await message.answer(
-        f"Привет, {client['name']}! 👋\n\nТвоя программа тренировок готова — нажми кнопку ниже, чтобы открыть.",
-        reply_markup=client_program_keyboard(program["id"]),
+        f"Привет, {client['name']}! 👋\n\nТвои программы тренировок доступны — нажми кнопку ниже, чтобы открыть.",
+        reply_markup=client_programs_keyboard(invite_token),
     )
 
 

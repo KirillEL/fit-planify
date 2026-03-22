@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/planify/api/internal/model"
@@ -19,9 +20,12 @@ func NewClientHandler(repo *repository.ClientRepo, trainerRepo *repository.Train
 	return &ClientHandler{repo, trainerRepo}
 }
 
+func (h *ClientHandler) getTrainer(r *http.Request) (*model.Trainer, error) {
+	return h.trainerRepo.GetByTelegramID(getTrainerTelegramID(r))
+}
+
 func (h *ClientHandler) List(w http.ResponseWriter, r *http.Request) {
-	telegramID := getTrainerTelegramID(r)
-	trainer, err := h.trainerRepo.GetByTelegramID(telegramID)
+	trainer, err := h.getTrainer(r)
 	if err != nil {
 		http.Error(w, "trainer not found", http.StatusNotFound)
 		return
@@ -35,8 +39,7 @@ func (h *ClientHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
-	telegramID := getTrainerTelegramID(r)
-	trainer, err := h.trainerRepo.GetByTelegramID(telegramID)
+	trainer, err := h.getTrainer(r)
 	if err != nil {
 		http.Error(w, "trainer not found", http.StatusNotFound)
 		return
@@ -45,14 +48,19 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Name string `json:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Name == "" {
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	name := strings.TrimSpace(body.Name)
+	if name == "" || len(name) > 100 {
+		http.Error(w, "name must be 1-100 characters", http.StatusBadRequest)
 		return
 	}
 
 	client := &model.Client{
 		TrainerID:   trainer.ID,
-		Name:        body.Name,
+		Name:        name,
 		InviteToken: generateToken(),
 	}
 	if err := h.repo.Create(client); err != nil {
@@ -63,8 +71,13 @@ func (h *ClientHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ClientHandler) Get(w http.ResponseWriter, r *http.Request) {
+	trainer, err := h.getTrainer(r)
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	client, err := h.repo.GetByID(id)
+	client, err := h.repo.GetByIDForTrainer(id, trainer.ID)
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -72,9 +85,40 @@ func (h *ClientHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, client)
 }
 
+func (h *ClientHandler) Update(w http.ResponseWriter, r *http.Request) {
+	trainer, err := h.getTrainer(r)
+	if err != nil {
+		http.Error(w, "trainer not found", http.StatusNotFound)
+		return
+	}
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+
+	var body struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	name := strings.TrimSpace(body.Name)
+	if name == "" || len(name) > 100 {
+		http.Error(w, "name must be 1-100 characters", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.repo.Update(id, trainer.ID, name); err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *ClientHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	telegramID := getTrainerTelegramID(r)
-	trainer, _ := h.trainerRepo.GetByTelegramID(telegramID)
+	trainer, err := h.getTrainer(r)
+	if err != nil {
+		http.Error(w, "trainer not found", http.StatusNotFound)
+		return
+	}
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err := h.repo.Delete(id, trainer.ID); err != nil {
 		http.Error(w, "db error", http.StatusInternalServerError)
@@ -111,5 +155,25 @@ func (h *ClientHandler) BindTelegram(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "db error", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	trainer, err := h.trainerRepo.GetByID(client.TrainerID)
+	trainerTelegramID := int64(0)
+	if err == nil {
+		trainerTelegramID = trainer.TelegramID
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"client":              client,
+		"trainer_telegram_id": trainerTelegramID,
+	})
+}
+
+// GetProgramsByToken returns all programs for a client identified by invite token.
+// Used by the client-facing Mini App page (no JWT required).
+func (h *ClientHandler) GetProgramsByToken(w http.ResponseWriter, r *http.Request) {
+	token := chi.URLParam(r, "token")
+	programs, err := h.repo.GetProgramsByToken(token)
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	writeJSON(w, http.StatusOK, programs)
 }

@@ -1,0 +1,60 @@
+@use '../../styles/variables' as *;
+
+.page {
+  padding: 20px 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: $tg-secondary-bg;
+  border-radius: $radius-lg;
+  padding: 16px;
+  text-decoration: none;
+  color: $tg-text;
+
+  &:active {
+    opacity: 0.7;
+  }
+}
+
+.icon {
+  font-size: 22px;
+}
+
+.name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.arrow {
+  color: $tg-hint;
+  font-size: 22px;
+}
+
+.center {
+  text-align: center;
+  padding: 60px 16px;
+  color: $tg-hint;
+}
+
+.empty {
+  color: $tg-hint;
+  text-align: center;
+  padding: 40px 0;
+}

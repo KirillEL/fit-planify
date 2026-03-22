@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -20,6 +24,7 @@ func main() {
 	dbURL := mustEnv("DATABASE_URL")
 	jwtSecret := mustEnv("JWT_SECRET")
 	botToken := mustEnv("BOT_TOKEN")
+	botSecret := getEnv("BOT_SECRET", "")
 	port := getEnv("API_PORT", "8080")
 	devMode := os.Getenv("DEV_MODE") == "true"
 
@@ -35,18 +40,40 @@ func main() {
 	clientRepo := repository.NewClientRepo(db)
 	programRepo := repository.NewProgramRepo(db)
 	paymentRepo := repository.NewPaymentRepo(db)
+	notifyRepo := repository.NewNotifyRepo(db)
 
 	if devMode {
 		log.Println("WARNING: DEV_MODE is enabled — /auth/dev endpoint is active")
 	}
 
-	r := handler.NewRouter(trainerRepo, clientRepo, programRepo, paymentRepo, jwtSecret, botToken, devMode)
+	r := handler.NewRouter(trainerRepo, clientRepo, programRepo, paymentRepo, notifyRepo, jwtSecret, botToken, botSecret, devMode)
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Planify API starting on %s", addr)
-	if err := http.ListenAndServe(addr, r); err != nil {
-		log.Fatal(err)
+	srv := &http.Server{
+		Addr:         addr,
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
+
+	go func() {
+		log.Printf("Planify API starting on %s", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("shutdown: %v", err)
+	}
+	log.Println("Server stopped")
 }
 
 func runMigrations(dbURL string) {

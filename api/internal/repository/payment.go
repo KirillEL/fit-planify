@@ -17,9 +17,15 @@ func (r *PaymentRepo) Create(p *model.Payment) error {
 	`, p.ClientID, p.Amount, p.IsPaid, p.PaidAt, p.NextPaymentAt, p.Note).Scan(&p.ID, &p.CreatedAt)
 }
 
-func (r *PaymentRepo) GetByClientID(clientID int64) ([]model.Payment, error) {
+// GetByClientID returns payments only if client belongs to trainerID.
+func (r *PaymentRepo) GetByClientID(clientID, trainerID int64) ([]model.Payment, error) {
 	payments := make([]model.Payment, 0)
-	err := r.db.Select(&payments, `SELECT * FROM payments WHERE client_id = $1 ORDER BY created_at DESC`, clientID)
+	err := r.db.Select(&payments, `
+		SELECT p.* FROM payments p
+		JOIN clients c ON c.id = p.client_id
+		WHERE p.client_id = $1 AND c.trainer_id = $2
+		ORDER BY p.created_at DESC
+	`, clientID, trainerID)
 	return payments, err
 }
 

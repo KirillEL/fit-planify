@@ -5,6 +5,7 @@ import (
 	"github.com/planify/api/internal/model"
 )
 
+
 type ClientRepo struct{ db *sqlx.DB }
 
 func NewClientRepo(db *sqlx.DB) *ClientRepo { return &ClientRepo{db} }
@@ -29,6 +30,18 @@ func (r *ClientRepo) GetByID(id int64) (*model.Client, error) {
 	return &c, err
 }
 
+// GetByIDForTrainer returns a client only if it belongs to the given trainer.
+func (r *ClientRepo) GetByIDForTrainer(id, trainerID int64) (*model.Client, error) {
+	var c model.Client
+	err := r.db.Get(&c, `SELECT * FROM clients WHERE id = $1 AND trainer_id = $2`, id, trainerID)
+	return &c, err
+}
+
+func (r *ClientRepo) Update(id, trainerID int64, name string) error {
+	_, err := r.db.Exec(`UPDATE clients SET name = $1 WHERE id = $2 AND trainer_id = $3`, name, id, trainerID)
+	return err
+}
+
 func (r *ClientRepo) GetByInviteToken(token string) (*model.Client, error) {
 	var c model.Client
 	err := r.db.Get(&c, `SELECT * FROM clients WHERE invite_token = $1`, token)
@@ -43,4 +56,16 @@ func (r *ClientRepo) SetTelegramID(clientID int64, telegramID int64) error {
 func (r *ClientRepo) Delete(id int64, trainerID int64) error {
 	_, err := r.db.Exec(`DELETE FROM clients WHERE id = $1 AND trainer_id = $2`, id, trainerID)
 	return err
+}
+
+// GetProgramsByToken returns all programs for the client identified by invite token.
+func (r *ClientRepo) GetProgramsByToken(token string) ([]model.Program, error) {
+	programs := make([]model.Program, 0)
+	err := r.db.Select(&programs, `
+		SELECT p.* FROM programs p
+		JOIN clients c ON c.id = p.client_id
+		WHERE c.invite_token = $1
+		ORDER BY p.created_at DESC
+	`, token)
+	return programs, err
 }
