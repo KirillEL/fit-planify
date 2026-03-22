@@ -15,12 +15,10 @@ declare global {
 const ONBOARDING_KEY = 'planify_onboarded'
 
 function App() {
-  const [authReady, setAuthReady] = useState(!!localStorage.getItem('token'))
+  const [authReady, setAuthReady] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
 
   useEffect(() => {
-    if (authReady) return
-
     const tg = window.Telegram?.WebApp
 
     if (tg?.initData) {
@@ -28,6 +26,7 @@ function App() {
       tg.expand()
       authTelegram(tg.initData)
         .then((r) => localStorage.setItem('token', r.data.token))
+        .catch(() => localStorage.removeItem('token'))
         .finally(() => setAuthReady(true))
       return
     }
