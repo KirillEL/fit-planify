@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -79,11 +80,12 @@ func (h *AuthHandler) validateInitData(initData string) (*telegramUser, bool) {
 		if len(kv) != 2 {
 			continue
 		}
+		decoded, _ := url.QueryUnescape(kv[1])
 		if kv[0] == "hash" {
-			hash = kv[1]
+			hash = decoded
 		} else {
-			params[kv[0]] = kv[1]
-			dataCheckParts = append(dataCheckParts, kv[0]+"="+kv[1])
+			params[kv[0]] = decoded
+			dataCheckParts = append(dataCheckParts, kv[0]+"="+decoded)
 		}
 	}
 
