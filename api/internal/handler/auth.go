@@ -18,11 +18,12 @@ import (
 type AuthHandler struct {
 	trainerRepo *repository.TrainerRepo
 	jwtSecret   string
+	botToken    string
 	devMode     bool
 }
 
-func NewAuthHandler(trainerRepo *repository.TrainerRepo, jwtSecret string, devMode bool) *AuthHandler {
-	return &AuthHandler{trainerRepo, jwtSecret, devMode}
+func NewAuthHandler(trainerRepo *repository.TrainerRepo, jwtSecret, botToken string, devMode bool) *AuthHandler {
+	return &AuthHandler{trainerRepo, jwtSecret, botToken, devMode}
 }
 
 type telegramAuthRequest struct {
@@ -90,7 +91,7 @@ func (h *AuthHandler) validateInitData(initData string) (*telegramUser, bool) {
 	dataCheckString := strings.Join(dataCheckParts, "\n")
 
 	secretKey := hmac.New(sha256.New, []byte("WebAppData"))
-	secretKey.Write([]byte(h.jwtSecret))
+	secretKey.Write([]byte(h.botToken))
 
 	mac := hmac.New(sha256.New, secretKey.Sum(nil))
 	mac.Write([]byte(dataCheckString))

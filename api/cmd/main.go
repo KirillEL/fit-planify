@@ -19,6 +19,7 @@ func main() {
 
 	dbURL := mustEnv("DATABASE_URL")
 	jwtSecret := mustEnv("JWT_SECRET")
+	botToken := mustEnv("BOT_TOKEN")
 	port := getEnv("API_PORT", "8080")
 	devMode := os.Getenv("DEV_MODE") == "true"
 
@@ -39,7 +40,7 @@ func main() {
 		log.Println("WARNING: DEV_MODE is enabled — /auth/dev endpoint is active")
 	}
 
-	r := handler.NewRouter(trainerRepo, clientRepo, programRepo, paymentRepo, jwtSecret, devMode)
+	r := handler.NewRouter(trainerRepo, clientRepo, programRepo, paymentRepo, jwtSecret, botToken, devMode)
 
 	addr := fmt.Sprintf(":%s", port)
 	log.Printf("Planify API starting on %s", addr)

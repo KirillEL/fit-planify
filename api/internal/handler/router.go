@@ -24,6 +24,7 @@ func NewRouter(
 	programRepo *repository.ProgramRepo,
 	paymentRepo *repository.PaymentRepo,
 	jwtSecret string,
+	botToken string,
 	devMode bool,
 ) *chi.Mux {
 	r := chi.NewRouter()
@@ -37,7 +38,7 @@ func NewRouter(
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	}))
 
-	auth := NewAuthHandler(trainerRepo, jwtSecret, devMode)
+	auth := NewAuthHandler(trainerRepo, jwtSecret, botToken, devMode)
 	trainer := NewTrainerHandler(trainerRepo, jwtSecret)
 	client := NewClientHandler(clientRepo, trainerRepo)
 	program := NewProgramHandler(programRepo, clientRepo)
