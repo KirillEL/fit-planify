@@ -47,6 +47,13 @@ export default function ClientsPage() {
     setToast('🔗 Ссылка скопирована!')
   }
 
+  const shareInviteLink = (token: string) => {
+    const link = `https://t.me/${BOT_USERNAME}?start=invite_${token}`
+    const text = 'Привет! Тренер приглашает тебя в систему управления тренировками Planify.'
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`
+    window.Telegram?.WebApp?.openTelegramLink(shareUrl)
+  }
+
   if (loading) return <div className={s.loader}>Загрузка...</div>
   if (error) return <div className={s.loader}>Ошибка загрузки. Обновите страницу.</div>
 
@@ -89,6 +96,13 @@ export default function ClientsPage() {
                 </span>
               </div>
               <div className={s.clientActions}>
+                <LoadingButton
+                  variant="secondary"
+                  onClick={() => shareInviteLink(c.invite_token)}
+                  disabled={!!c.telegram_id}
+                >
+                  📤
+                </LoadingButton>
                 <LoadingButton
                   variant="secondary"
                   onClick={() => copyInviteLink(c.invite_token)}

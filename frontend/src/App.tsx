@@ -8,7 +8,14 @@ import Onboarding from './components/Onboarding/Onboarding'
 
 declare global {
   interface Window {
-    Telegram?: { WebApp: any }
+    Telegram?: {
+      WebApp: {
+        initData: string
+        ready(): void
+        expand(): void
+        openTelegramLink(url: string): void
+      }
+    }
   }
 }
 

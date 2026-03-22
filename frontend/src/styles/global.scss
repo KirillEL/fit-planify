@@ -28,10 +28,17 @@ select {
   background: $tg-secondary-bg;
   color: $tg-text;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   font-family: inherit;
 
   &:focus {
     outline: none;
     border-color: $tg-button;
   }
+}
+
+input[type='date'] {
+  appearance: none;
+  -webkit-appearance: none;
 }
