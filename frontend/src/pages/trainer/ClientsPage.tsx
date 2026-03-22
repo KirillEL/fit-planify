@@ -7,7 +7,7 @@ import LoadingButton from '../../components/LoadingButton/LoadingButton'
 import Toast from '../../components/Toast/Toast'
 import s from './ClientsPage.module.scss'
 
-const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'planify_bot'
+const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'fit_planify_bot'
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
