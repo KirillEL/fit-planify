@@ -1,0 +1,47 @@
+@use '@/styles/variables' as *;
+
+.dayCard {
+  background: $tg-bg;
+  border-radius: $radius-md;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dayHeader {
+  @include flex-row;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dayEmpty {
+  font-size: 12px;
+  color: $tg-hint;
+  padding: 4px 0 8px;
+}
+
+.exerciseTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 8px;
+
+  th {
+    text-align: left;
+    color: $tg-hint;
+    font-weight: 500;
+    padding: 4px 0;
+  }
+
+  td {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle;
+  }
+}
+
+.note {
+  font-size: 11px;
+  color: $tg-hint;
+  margin-top: 2px;
+}

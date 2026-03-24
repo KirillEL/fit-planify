@@ -1,0 +1,52 @@
+@use '@/styles/variables' as *;
+
+.presetsLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: $tg-hint;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.presets {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin-bottom: 4px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.preset {
+  white-space: nowrap;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1px solid $tg-hint;
+  background: none;
+  color: $tg-text;
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    background: $tg-secondary-bg;
+  }
+
+  &.presetActive {
+    background: $tg-button;
+    color: $tg-button-text;
+    border-color: $tg-button;
+  }
+}
+
+.stepperRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}

@@ -1,4 +1,4 @@
-@use '../../styles/variables' as *;
+@use '@/styles/variables' as *;
 
 .page {
   padding: 16px;
@@ -31,6 +31,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 // ─── Tabs ───
@@ -54,215 +55,15 @@
 
   &.active {
     opacity: 1;
-    font-weight: 700;
-    background: $tg-button;
-    color: $tg-button-text;
-  }
-}
-
-// ─── Add row ───
-
-.addRow {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-
-  input {
-    flex: 1;
-  }
-}
-
-// ─── Empty states ───
-
-.emptyState {
-  text-align: center;
-  padding: 32px 16px;
-  @include flex-col(8);
-  align-items: center;
-}
-
-.emptyIcon {
-  font-size: 40px;
-  line-height: 1;
-}
-
-.emptyTitle {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.emptyHint {
-  font-size: 13px;
-  color: $tg-hint;
-  line-height: 1.5;
-  max-width: 260px;
-}
-
-// ─── Program & days ───
-
-.programCard {
-  @include card;
-  margin-bottom: 12px;
-}
-
-.programHeader {
-  @include flex-row;
-  justify-content: space-between;
-  margin-bottom: 10px;
-
-  h3 {
-    font-size: 15px;
     font-weight: 600;
-  }
-}
-
-.dayCard {
-  background: $tg-bg;
-  border-radius: $radius-md;
-  padding: 10px;
-  margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.dayHeader {
-  @include flex-row;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.dayEmpty {
-  font-size: 12px;
-  color: $tg-hint;
-  padding: 4px 0 8px;
-}
-
-.exerciseTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  margin-bottom: 8px;
-
-  th {
-    text-align: left;
-    color: $tg-hint;
-    font-weight: 500;
-    padding: 4px 0;
-  }
-
-  td {
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    vertical-align: middle;
-  }
-}
-
-.note {
-  font-size: 11px;
-  color: $tg-hint;
-  margin-top: 2px;
-}
-
-// ─── Payments ───
-
-.paymentCard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px;
-  border-radius: $radius-md;
-  margin-bottom: 8px;
-  background: $tg-secondary-bg;
-
-  &.paid {
-    border-left: 3px solid $color-success;
-  }
-
-  &.unpaid {
-    border-left: 3px solid $color-warning;
-  }
-}
-
-.paymentInfo {
-  @include flex-col(2);
-  flex: 1;
-}
-
-.paymentAmount {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.paymentNote {
-  font-size: 12px;
-  color: $tg-hint;
-}
-
-.paymentRight {
-  @include flex-row(8);
-  flex-shrink: 0;
-}
-
-.paymentStatus {
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-// ─── Exercise modal ───
-
-.presetsLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: $tg-hint;
-  display: block;
-  margin-bottom: 8px;
-}
-
-.presets {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  margin-bottom: 4px;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.preset {
-  white-space: nowrap;
-  padding: 7px 14px;
-  border-radius: 20px;
-  border: 1px solid $tg-hint;
-  background: none;
-  color: $tg-text;
-  font-size: 13px;
-  cursor: pointer;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-
-  &:active {
-    background: $tg-secondary-bg;
-  }
-
-  &.presetActive {
     background: $tg-button;
     color: $tg-button-text;
-    border-color: $tg-button;
   }
 }
 
-.stepperRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px;
-}
+// ─── Loader ───
 
-.loader,
-.error {
+.loader {
   text-align: center;
   padding: 40px;
   color: $tg-hint;

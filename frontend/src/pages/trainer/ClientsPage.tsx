@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createClient, deleteClient, getClients } from '../../api/client'
-import type { Client } from '../../types'
-import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog'
-import LoadingButton from '../../components/LoadingButton/LoadingButton'
-import Toast from '../../components/Toast/Toast'
+import { createClient, deleteClient, getClients, getUnpaid } from '@/api/client'
+import type { Client, Payment } from '@/types'
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog'
+import LoadingButton from '@/components/LoadingButton/LoadingButton'
+import Toast from '@/components/Toast/Toast'
+import SkeletonClientCard from './components/SkeletonClientCard/SkeletonClientCard'
+import UnpaidWidget from './components/UnpaidWidget/UnpaidWidget'
 import s from './ClientsPage.module.scss'
 
 const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'fit_planify_bot'
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
+  const [unpaidPayments, setUnpaidPayments] = useState<Payment[]>([])
   const [search, setSearch] = useState('')
   const [newName, setNewName] = useState('')
   const [loading, setLoading] = useState(true)
@@ -21,8 +24,11 @@ export default function ClientsPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    getClients()
-      .then((r) => setClients(r.data))
+    Promise.all([getClients(), getUnpaid()])
+      .then(([r, u]) => {
+        setClients(r.data)
+        setUnpaidPayments(u.data ?? [])
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
@@ -55,7 +61,6 @@ export default function ClientsPage() {
     window.Telegram?.WebApp?.openTelegramLink(shareUrl)
   }
 
-  if (loading) return <div className={s.loader}>Загрузка...</div>
   if (error) return <div className={s.loader}>Ошибка загрузки. Обновите страницу.</div>
 
   return (
@@ -63,6 +68,14 @@ export default function ClientsPage() {
       {toast && <Toast message={toast} onHide={() => setToast(null)} />}
 
       <h1>Мои клиенты</h1>
+
+      {!loading && (
+        <UnpaidWidget
+          unpaid={unpaidPayments}
+          clients={clients}
+          onNavigate={(clientId) => navigate(`/trainer/clients/${clientId}?tab=payments`)}
+        />
+      )}
 
       {clients.length > 0 && (
         <input
@@ -86,7 +99,13 @@ export default function ClientsPage() {
         </LoadingButton>
       </div>
 
-      {clients.length === 0 ? (
+      {loading ? (
+        <ul className={s.clientList}>
+          <SkeletonClientCard />
+          <SkeletonClientCard />
+          <SkeletonClientCard />
+        </ul>
+      ) : clients.length === 0 ? (
         <div className={s.emptyState}>
           <span className={s.emptyIcon}>👤</span>
           <p className={s.emptyTitle}>Клиентов пока нет</p>
@@ -98,7 +117,7 @@ export default function ClientsPage() {
       ) : (
         <ul className={s.clientList}>
           {clients.filter((c) => c.name.toLowerCase().includes(search.toLowerCase())).map((c) => (
-            <li key={c.id} className={s.clientCard}>
+            <li key={c.id} className={`${s.clientCard} ${c.telegram_id ? s.connected : s.pending}`}>
               <div className={s.clientInfo} onClick={() => navigate(`/trainer/clients/${c.id}`)}>
                 <span className={s.clientName}>{c.name}</span>
                 <span className={s.clientStatus}>

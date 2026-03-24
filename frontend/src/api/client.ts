@@ -45,6 +45,7 @@ export const createProgram = (clientId: number, title: string) =>
 export const getProgram = (id: number) => http.get(`/programs/${id}`)
 export const deleteProgram = (id: number) => http.delete(`/programs/${id}`)
 export const updateProgram = (id: number, title: string) => http.put(`/programs/${id}`, { title })
+export const duplicateProgram = (id: number) => http.post(`/programs/${id}/duplicate`)
 
 // Days
 export const addDay = (programId: number, day_number: number, title: string) =>
@@ -55,12 +56,12 @@ export const updateDay = (id: number, title: string) => http.put(`/days/${id}`, 
 // Exercises
 export const addExercise = (
   dayId: number,
-  data: { name: string; sets: number; reps: number; weight: number; note: string }
+  data: { name: string; sets: number; reps: number; weight: number; note: string; order?: number }
 ) => http.post(`/days/${dayId}/exercises`, data)
 export const deleteExercise = (id: number) => http.delete(`/exercises/${id}`)
 export const updateExercise = (
   id: number,
-  data: { name: string; sets: number; reps: number; weight: number; note: string }
+  data: { name: string; sets: number; reps: number; weight: number; note: string; order?: number }
 ) => http.put(`/exercises/${id}`, data)
 
 // Payments

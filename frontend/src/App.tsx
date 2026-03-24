@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { authDev, authTelegram } from './api/client'
-import ClientDetailPage from './pages/trainer/ClientDetailPage'
-import ClientsPage from './pages/trainer/ClientsPage'
-import ClientProgramPage from './pages/client/ClientProgramPage'
-import ClientProgramListPage from './pages/client/ClientProgramListPage'
-import Onboarding from './components/Onboarding/Onboarding'
+import { AppRoot } from '@telegram-apps/telegram-ui'
+import { authDev, authTelegram } from '@/api/client'
+import ClientDetailPage from '@/pages/trainer/ClientDetailPage'
+import ClientsPage from '@/pages/trainer/ClientsPage'
+import ClientProgramPage from '@/pages/client/ClientProgramPage'
+import ClientProgramListPage from '@/pages/client/ClientProgramListPage'
+import Onboarding from '@/components/Onboarding/Onboarding'
 
 declare global {
   interface Window {
@@ -68,7 +69,7 @@ function App() {
   if (!authReady) return null
 
   return (
-    <>
+    <AppRoot>
       {showOnboarding && <Onboarding onDone={handleOnboardingDone} />}
       <BrowserRouter>
         <Routes>
@@ -79,7 +80,7 @@ function App() {
           <Route path="*" element={<Navigate to="/trainer" replace />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </AppRoot>
   )
 }
 

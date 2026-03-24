@@ -42,3 +42,16 @@ input[type='date'] {
   appearance: none;
   -webkit-appearance: none;
 }
+
+// ─── Skeleton loading ───
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.skeleton {
+  background: $tg-secondary-bg;
+  border-radius: $radius-md;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}

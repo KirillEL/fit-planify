@@ -1,0 +1,29 @@
+@use '@/styles/variables' as *;
+
+.actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.moveBtn {
+  background: none;
+  border: none;
+  color: $tg-hint;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: $radius-sm;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover:not(:disabled) {
+    background: $tg-secondary-bg;
+    color: $tg-text;
+  }
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+}

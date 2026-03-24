@@ -1,0 +1,45 @@
+@use '@/styles/variables' as *;
+
+.paymentCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border-radius: $radius-md;
+  margin-bottom: 8px;
+  background: $tg-secondary-bg;
+
+  &.paid {
+    border-left: 3px solid $color-success;
+  }
+
+  &.unpaid {
+    border-left: 3px solid $color-warning;
+  }
+}
+
+.paymentInfo {
+  @include flex-col(2);
+  flex: 1;
+}
+
+.paymentAmount {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.paymentNote {
+  font-size: 12px;
+  color: $tg-hint;
+}
+
+.paymentRight {
+  @include flex-row(8);
+  flex-shrink: 0;
+}
+
+.paymentStatus {
+  font-size: 13px;
+  white-space: nowrap;
+}

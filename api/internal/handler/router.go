@@ -57,6 +57,7 @@ func NewRouter(
 		r.Get("/programs/{id}", program.Get)
 		r.Put("/programs/{id}", program.Update)
 		r.Delete("/programs/{id}", program.Delete)
+		r.Post("/programs/{id}/duplicate", program.Duplicate)
 
 		r.Post("/programs/{programID}/days", program.AddDay)
 		r.Put("/days/{id}", program.UpdateDay)

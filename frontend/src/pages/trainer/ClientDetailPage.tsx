@@ -1,28 +1,23 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   addDay, addExercise, createProgram, deleteDay,
   deleteExercise, deleteProgram, getClient, getClientPrograms,
   markPaid, createPayment, getPayments,
   updateClient, updateProgram, updateDay, updateExercise,
-} from '../../api/client'
-import type { Payment, Program, WorkoutDay, Exercise } from '../../types'
-import ConfirmDialog from '../../components/ConfirmDialog/ConfirmDialog'
-import LoadingButton from '../../components/LoadingButton/LoadingButton'
-import Modal from '../../components/Modal/Modal'
-import FormField from '../../components/FormField/FormField'
-import Stepper from '../../components/Stepper/Stepper'
-import Toast from '../../components/Toast/Toast'
+  duplicateProgram,
+} from '@/api/client'
+import type { Payment, Program, WorkoutDay, Exercise } from '@/types'
+import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog'
+import LoadingButton from '@/components/LoadingButton/LoadingButton'
+import Modal from '@/components/Modal/Modal'
+import FormField from '@/components/FormField/FormField'
+import Toast from '@/components/Toast/Toast'
+import ExerciseModal, { type ExerciseForm } from './components/ExerciseModal/ExerciseModal'
+import ProgramTab from './components/ProgramTab/ProgramTab'
+import PaymentsTab from './components/PaymentsTab/PaymentsTab'
 import s from './ClientDetailPage.module.scss'
 
-const EXERCISE_PRESETS = [
-  'Приседания', 'Жим лёжа', 'Становая тяга', 'Подтягивания', 'Отжимания',
-  'Жим стоя', 'Тяга верхнего блока', 'Жим ногами', 'Скручивания', 'Планка',
-  'Выпады', 'Тяга в наклоне', 'Подъём на бицепс', 'Французский жим',
-  'Гиперэкстензия', 'Бег', 'Прыжки на скакалке',
-]
-
-interface ExerciseForm { name: string; sets: number; reps: number; weight: number; note: string }
 interface PaymentForm { amount: string; note: string; date: string }
 interface ToastState { message: string; type: 'success' | 'error' }
 
@@ -30,11 +25,14 @@ export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
   const clientId = Number(id)
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [clientName, setClientName] = useState('')
   const [programs, setPrograms] = useState<Program[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
-  const [tab, setTab] = useState<'program' | 'payments'>('program')
+  const [tab, setTab] = useState<'program' | 'payments'>(
+    (searchParams.get('tab') as 'program' | 'payments') || 'program'
+  )
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<ToastState | null>(null)
 
@@ -91,11 +89,7 @@ export default function ClientDetailPage() {
   const showSuccess = (msg: string) => setToast({ message: msg, type: 'success' })
 
   useEffect(() => {
-    Promise.all([
-      getClient(clientId),
-      getClientPrograms(clientId),
-      getPayments(clientId),
-    ])
+    Promise.all([getClient(clientId), getClientPrograms(clientId), getPayments(clientId)])
       .then(([c, p, pay]) => {
         setClientName(c.data.name)
         setPrograms(p.data)
@@ -105,12 +99,14 @@ export default function ClientDetailPage() {
       .finally(() => setLoading(false))
   }, [clientId])
 
+  const switchTab = (t: 'program' | 'payments') => {
+    setTab(t)
+    setSearchParams(t === 'program' ? {} : { tab: t })
+  }
+
   // --- Client ---
 
-  const openEditClient = () => {
-    setEditClientName(clientName)
-    setEditClientModal(true)
-  }
+  const openEditClient = () => { setEditClientName(clientName); setEditClientModal(true) }
 
   const handleUpdateClient = async () => {
     if (!editClientName.trim()) return
@@ -120,11 +116,8 @@ export default function ClientDetailPage() {
       setClientName(editClientName.trim())
       setEditClientModal(false)
       showSuccess('Имя сохранено')
-    } catch {
-      showError('Не удалось сохранить')
-    } finally {
-      setSavingClient(false)
-    }
+    } catch { showError('Не удалось сохранить') }
+    finally { setSavingClient(false) }
   }
 
   // --- Program ---
@@ -136,17 +129,11 @@ export default function ClientDetailPage() {
       const r = await createProgram(clientId, programTitle.trim())
       setPrograms((prev) => [{ ...r.data, workout_days: [] }, ...prev])
       setProgramTitle('')
-    } catch {
-      showError('Не удалось создать программу')
-    } finally {
-      setCreatingProgram(false)
-    }
+    } catch { showError('Не удалось создать программу') }
+    finally { setCreatingProgram(false) }
   }
 
-  const openEditProgram = (p: Program) => {
-    setEditProgramTitle(p.title)
-    setEditProgramModal(p)
-  }
+  const openEditProgram = (p: Program) => { setEditProgramTitle(p.title); setEditProgramModal(p) }
 
   const handleUpdateProgram = async () => {
     if (!editProgramTitle.trim() || !editProgramModal) return
@@ -156,11 +143,8 @@ export default function ClientDetailPage() {
       setPrograms((prev) => prev.map((p) => p.id === editProgramModal.id ? { ...p, title: editProgramTitle.trim() } : p))
       setEditProgramModal(null)
       showSuccess('Программа обновлена')
-    } catch {
-      showError('Не удалось сохранить')
-    } finally {
-      setSavingProgram(false)
-    }
+    } catch { showError('Не удалось сохранить') }
+    finally { setSavingProgram(false) }
   }
 
   const handleDeleteProgram = async (program: Program) => {
@@ -168,18 +152,20 @@ export default function ClientDetailPage() {
       await deleteProgram(program.id)
       setPrograms((prev) => prev.filter((p) => p.id !== program.id))
       setConfirmDeleteProgram(null)
-    } catch {
-      showError('Не удалось удалить программу')
-    }
+    } catch { showError('Не удалось удалить программу') }
+  }
+
+  const handleDuplicateProgram = async (programId: number) => {
+    try {
+      const r = await duplicateProgram(programId)
+      setPrograms((prev) => [r.data, ...prev])
+      showSuccess('Программа скопирована')
+    } catch { showError('Не удалось скопировать программу') }
   }
 
   // --- Day ---
 
-  const openDayModal = (programId: number) => {
-    setDayTitle('')
-    setDayTitleError('')
-    setDayModalForProgram(programId)
-  }
+  const openDayModal = (programId: number) => { setDayTitle(''); setDayTitleError(''); setDayModalForProgram(programId) }
 
   const handleAddDay = async () => {
     if (!dayTitle.trim()) { setDayTitleError('Введите название дня'); return }
@@ -193,17 +179,11 @@ export default function ClientDetailPage() {
         p.id === programId ? { ...p, workout_days: [...(p.workout_days ?? []), { ...r.data, exercises: [] }] } : p
       ))
       setDayModalForProgram(null)
-    } catch {
-      showError('Не удалось добавить день')
-    } finally {
-      setAddingDay(false)
-    }
+    } catch { showError('Не удалось добавить день') }
+    finally { setAddingDay(false) }
   }
 
-  const openEditDay = (d: WorkoutDay, programId: number) => {
-    setEditDayTitle(d.title)
-    setEditDayModal({ id: d.id, title: d.title, programId })
-  }
+  const openEditDay = (d: WorkoutDay, programId: number) => { setEditDayTitle(d.title); setEditDayModal({ id: d.id, title: d.title, programId }) }
 
   const handleUpdateDay = async () => {
     if (!editDayTitle.trim() || !editDayModal) return
@@ -217,11 +197,8 @@ export default function ClientDetailPage() {
       ))
       setEditDayModal(null)
       showSuccess('День обновлён')
-    } catch {
-      showError('Не удалось сохранить')
-    } finally {
-      setSavingDay(false)
-    }
+    } catch { showError('Не удалось сохранить') }
+    finally { setSavingDay(false) }
   }
 
   const handleDeleteDay = async (day: WorkoutDay & { programId: number }) => {
@@ -231,9 +208,7 @@ export default function ClientDetailPage() {
         p.id === day.programId ? { ...p, workout_days: p.workout_days?.filter((d) => d.id !== day.id) } : p
       ))
       setConfirmDeleteDay(null)
-    } catch {
-      showError('Не удалось удалить день')
-    }
+    } catch { showError('Не удалось удалить день') }
   }
 
   // --- Exercise ---
@@ -248,19 +223,17 @@ export default function ClientDetailPage() {
     if (!exForm.name.trim()) { setExNameError('Введите название упражнения'); return }
     setAddingExercise(true)
     const { programId, dayId } = exerciseModal!
+    const order = (programs.find((p) => p.id === programId)?.workout_days?.find((d) => d.id === dayId)?.exercises?.length ?? 0) + 1
     try {
-      const r = await addExercise(dayId, { name: exForm.name.trim(), sets: exForm.sets, reps: exForm.reps, weight: exForm.weight, note: exForm.note.trim() })
+      const r = await addExercise(dayId, { name: exForm.name.trim(), sets: exForm.sets, reps: exForm.reps, weight: exForm.weight, note: exForm.note.trim(), order })
       setPrograms((prev) => prev.map((p) =>
         p.id === programId
           ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: [...(d.exercises ?? []), r.data] } : d) }
           : p
       ))
       setExerciseModal(null)
-    } catch {
-      showError('Не удалось добавить упражнение')
-    } finally {
-      setAddingExercise(false)
-    }
+    } catch { showError('Не удалось добавить упражнение') }
+    finally { setAddingExercise(false) }
   }
 
   const openEditExercise = (e: Exercise, programId: number, dayId: number) => {
@@ -271,9 +244,9 @@ export default function ClientDetailPage() {
   const handleUpdateExercise = async () => {
     if (!editExForm.name.trim() || !editExModal) return
     setSavingEx(true)
-    const { id: exId, programId, dayId } = editExModal
+    const { id: exId, programId, dayId, order } = editExModal
     try {
-      await updateExercise(exId, { name: editExForm.name.trim(), sets: editExForm.sets, reps: editExForm.reps, weight: editExForm.weight, note: editExForm.note.trim() })
+      await updateExercise(exId, { name: editExForm.name.trim(), sets: editExForm.sets, reps: editExForm.reps, weight: editExForm.weight, note: editExForm.note.trim(), order })
       setPrograms((prev) => prev.map((p) =>
         p.id === programId
           ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: d.exercises?.map((e) => e.id === exId ? { ...e, ...editExForm, name: editExForm.name.trim() } : e) } : d) }
@@ -281,11 +254,8 @@ export default function ClientDetailPage() {
       ))
       setEditExModal(null)
       showSuccess('Упражнение обновлено')
-    } catch {
-      showError('Не удалось сохранить')
-    } finally {
-      setSavingEx(false)
-    }
+    } catch { showError('Не удалось сохранить') }
+    finally { setSavingEx(false) }
   }
 
   const handleDeleteExercise = async (ex: Exercise & { programId: number; dayId: number }) => {
@@ -297,18 +267,41 @@ export default function ClientDetailPage() {
           : p
       ))
       setConfirmDeleteExercise(null)
-    } catch {
-      showError('Не удалось удалить упражнение')
-    }
+    } catch { showError('Не удалось удалить упражнение') }
+  }
+
+  const handleMoveExercise = async (exerciseId: number, direction: 'up' | 'down', dayId: number, programId: number) => {
+    const program = programs.find((p) => p.id === programId)
+    const day = program?.workout_days?.find((d) => d.id === dayId)
+    if (!day?.exercises) return
+    const exercises = [...day.exercises]
+    const idx = exercises.findIndex((e) => e.id === exerciseId)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= exercises.length) return
+
+    const updated = exercises.map((e, i) => {
+      if (i === idx) return { ...e, order: exercises[swapIdx].order }
+      if (i === swapIdx) return { ...e, order: exercises[idx].order }
+      return e
+    })
+
+    setPrograms((prev) => prev.map((p) =>
+      p.id === programId
+        ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: updated } : d) }
+        : p
+    ))
+
+    try {
+      await Promise.all([
+        updateExercise(updated[idx].id, { name: updated[idx].name, sets: updated[idx].sets, reps: updated[idx].reps, weight: updated[idx].weight, note: updated[idx].note, order: updated[idx].order }),
+        updateExercise(updated[swapIdx].id, { name: updated[swapIdx].name, sets: updated[swapIdx].sets, reps: updated[swapIdx].reps, weight: updated[swapIdx].weight, note: updated[swapIdx].note, order: updated[swapIdx].order }),
+      ])
+    } catch { showError('Не удалось изменить порядок') }
   }
 
   // --- Payment ---
 
-  const openPaymentModal = () => {
-    setPayForm({ amount: '', note: '', date: '' })
-    setPayErrors({})
-    setPaymentModal(true)
-  }
+  const openPaymentModal = () => { setPayForm({ amount: '', note: '', date: '' }); setPayErrors({}); setPaymentModal(true) }
 
   const handleCreatePayment = async () => {
     if (!payForm.amount || isNaN(Number(payForm.amount)) || Number(payForm.amount) <= 0) {
@@ -323,23 +316,17 @@ export default function ClientDetailPage() {
       })
       setPayments((prev) => [r.data, ...prev])
       setPaymentModal(false)
-    } catch {
-      showError('Не удалось создать платёж')
-    } finally {
-      setCreatingPayment(false)
-    }
+    } catch { showError('Не удалось создать платёж') }
+    finally { setCreatingPayment(false) }
   }
 
   const handleMarkPaid = async (paymentId: number) => {
     setMarkingPaidId(paymentId)
     try {
       await markPaid(paymentId)
-      setPayments((prev) => prev.map((p) => (p.id === paymentId ? { ...p, is_paid: true } : p)))
-    } catch {
-      showError('Не удалось отметить оплату')
-    } finally {
-      setMarkingPaidId(null)
-    }
+      setPayments((prev) => prev.map((p) => p.id === paymentId ? { ...p, is_paid: true } : p))
+    } catch { showError('Не удалось отметить оплату') }
+    finally { setMarkingPaidId(null) }
   }
 
   if (loading) return <div className={s.loader}>Загрузка...</div>
@@ -359,132 +346,41 @@ export default function ClientDetailPage() {
       </div>
 
       <div className={s.tabs}>
-        <button className={`${s.tab} ${tab === 'program' ? s.active : ''}`} onClick={() => setTab('program')}>
+        <button className={`${s.tab} ${tab === 'program' ? s.active : ''}`} onClick={() => switchTab('program')}>
           💪 Программа
         </button>
-        <button className={`${s.tab} ${tab === 'payments' ? s.active : ''}`} onClick={() => setTab('payments')}>
+        <button className={`${s.tab} ${tab === 'payments' ? s.active : ''}`} onClick={() => switchTab('payments')}>
           💳 Оплаты
         </button>
       </div>
 
-      {/* ─── Program tab ─── */}
       {tab === 'program' && (
-        <div>
-          <div className={s.addRow}>
-            <input
-              value={programTitle}
-              onChange={(e) => setProgramTitle(e.target.value)}
-              placeholder="Название программы"
-              enterKeyHint="done"
-              onKeyDown={(e) => e.key === 'Enter' && handleCreateProgram()}
-            />
-            <LoadingButton loading={creatingProgram} onClick={handleCreateProgram}>Создать</LoadingButton>
-          </div>
-
-          {programs.length === 0 && (
-            <div className={s.emptyState}>
-              <span className={s.emptyIcon}>📋</span>
-              <p className={s.emptyTitle}>Нет программ</p>
-              <p className={s.emptyHint}>Введите название программы выше и нажмите «Создать»</p>
-            </div>
-          )}
-
-          {programs.map((p) => (
-            <div key={p.id} className={s.programCard}>
-              <div className={s.programHeader}>
-                <h3>{p.title}</h3>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <LoadingButton variant="secondary" onClick={() => openEditProgram(p)}>✏️</LoadingButton>
-                  <LoadingButton variant="danger" onClick={() => setConfirmDeleteProgram(p)}>🗑</LoadingButton>
-                </div>
-              </div>
-
-              {p.workout_days?.map((d) => (
-                <div key={d.id} className={s.dayCard}>
-                  <div className={s.dayHeader}>
-                    <b>{d.title}</b>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <LoadingButton variant="smSecondary" onClick={() => openEditDay(d, p.id)}>✏️</LoadingButton>
-                      <LoadingButton variant="smDanger" onClick={() => setConfirmDeleteDay({ id: d.id, title: d.title, programId: p.id })}>✕</LoadingButton>
-                    </div>
-                  </div>
-
-                  {d.exercises && d.exercises.length > 0 ? (
-                    <table className={s.exerciseTable}>
-                      <thead>
-                        <tr><th>Упражнение</th><th>Подх.</th><th>Повт.</th><th>Вес</th><th></th></tr>
-                      </thead>
-                      <tbody>
-                        {d.exercises.map((e) => (
-                          <tr key={e.id}>
-                            <td>
-                              {e.name}
-                              {e.note && <div className={s.note}>{e.note}</div>}
-                            </td>
-                            <td>{e.sets}</td>
-                            <td>{e.reps}</td>
-                            <td>{e.weight > 0 ? `${e.weight} кг` : '—'}</td>
-                            <td>
-                              <div style={{ display: 'flex', gap: 4 }}>
-                                <LoadingButton variant="smSecondary" onClick={() => openEditExercise(e, p.id, d.id)}>✏️</LoadingButton>
-                                <LoadingButton variant="smDanger" onClick={() => setConfirmDeleteExercise({ id: e.id, name: e.name, programId: p.id, dayId: d.id })}>✕</LoadingButton>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <p className={s.dayEmpty}>Нет упражнений — нажмите «+ Упражнение»</p>
-                  )}
-
-                  <LoadingButton variant="sm" onClick={() => openExerciseModal(p.id, d.id)}>+ Упражнение</LoadingButton>
-                </div>
-              ))}
-
-              <LoadingButton onClick={() => openDayModal(p.id)}>+ День</LoadingButton>
-            </div>
-          ))}
-        </div>
+        <ProgramTab
+          programs={programs}
+          programTitle={programTitle}
+          creatingProgram={creatingProgram}
+          onProgramTitleChange={setProgramTitle}
+          onCreateProgram={handleCreateProgram}
+          onEditProgram={openEditProgram}
+          onDeleteProgram={setConfirmDeleteProgram}
+          onDuplicateProgram={handleDuplicateProgram}
+          onAddDay={openDayModal}
+          onEditDay={openEditDay}
+          onDeleteDay={(d) => setConfirmDeleteDay(d)}
+          onAddExercise={openExerciseModal}
+          onEditExercise={openEditExercise}
+          onDeleteExercise={(ex) => setConfirmDeleteExercise(ex)}
+          onMoveExercise={handleMoveExercise}
+        />
       )}
 
-      {/* ─── Payments tab ─── */}
       {tab === 'payments' && (
-        <div>
-          <div className={s.addRow}>
-            <LoadingButton onClick={openPaymentModal}>+ Добавить платёж</LoadingButton>
-          </div>
-
-          {payments.length === 0 && (
-            <div className={s.emptyState}>
-              <span className={s.emptyIcon}>💳</span>
-              <p className={s.emptyTitle}>Нет платежей</p>
-              <p className={s.emptyHint}>Нажмите «+ Добавить платёж» чтобы создать запись об оплате</p>
-            </div>
-          )}
-
-          {payments.map((p) => (
-            <div key={p.id} className={`${s.paymentCard} ${p.is_paid ? s.paid : s.unpaid}`}>
-              <div className={s.paymentInfo}>
-                <span className={s.paymentAmount}>{p.amount} ₽</span>
-                {p.note && <span className={s.paymentNote}>{p.note}</span>}
-                {p.next_payment_at && (
-                  <span className={s.paymentNote}>
-                    След. платёж: {new Date(p.next_payment_at).toLocaleDateString('ru-RU')}
-                  </span>
-                )}
-              </div>
-              <div className={s.paymentRight}>
-                <span className={s.paymentStatus}>{p.is_paid ? '✅ Оплачено' : '⏳ Не оплачено'}</span>
-                {!p.is_paid && (
-                  <LoadingButton variant="sm" loading={markingPaidId === p.id} onClick={() => handleMarkPaid(p.id)}>
-                    Оплачено
-                  </LoadingButton>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <PaymentsTab
+          payments={payments}
+          markingPaidId={markingPaidId}
+          onAddPayment={openPaymentModal}
+          onMarkPaid={handleMarkPaid}
+        />
       )}
 
       {/* ─── Edit client modal ─── */}
@@ -497,7 +393,7 @@ export default function ClientDetailPage() {
         </Modal>
       )}
 
-      {/* ─── Day modal ─── */}
+      {/* ─── Add day modal ─── */}
       {dayModalForProgram !== null && (
         <Modal title="Добавить день" onClose={() => setDayModalForProgram(null)}>
           <FormField label="Название дня" error={dayTitleError}>
@@ -527,56 +423,30 @@ export default function ClientDetailPage() {
         </Modal>
       )}
 
-      {/* ─── Exercise modal ─── */}
+      {/* ─── Add exercise modal ─── */}
       {exerciseModal && (
-        <Modal title="Добавить упражнение" onClose={() => setExerciseModal(null)}>
-          <div>
-            <span className={s.presetsLabel}>Популярные</span>
-            <div className={s.presets}>
-              {EXERCISE_PRESETS.map((preset) => (
-                <button key={preset} type="button" className={`${s.preset} ${exForm.name === preset ? s.presetActive : ''}`} onClick={() => { setExForm((f) => ({ ...f, name: preset })); setExNameError('') }}>{preset}</button>
-              ))}
-            </div>
-          </div>
-          <FormField label="Название" error={exNameError}>
-            <input value={exForm.name} onChange={(e) => { setExForm((f) => ({ ...f, name: e.target.value })); setExNameError('') }} placeholder="или введите своё..." enterKeyHint="next" />
-          </FormField>
-          <div className={s.stepperRow}>
-            <Stepper label="Подходы" value={exForm.sets} onChange={(v) => setExForm((f) => ({ ...f, sets: v }))} min={1} max={20} />
-            <Stepper label="Повторения" value={exForm.reps} onChange={(v) => setExForm((f) => ({ ...f, reps: v }))} min={1} max={100} />
-            <Stepper label="Вес (кг)" value={exForm.weight} onChange={(v) => setExForm((f) => ({ ...f, weight: v }))} min={0} max={500} step={2.5} />
-          </div>
-          <FormField label="Заметка (необязательно)">
-            <input value={exForm.note} onChange={(e) => setExForm((f) => ({ ...f, note: e.target.value }))} placeholder="Медленный негатив, контроль" enterKeyHint="done" />
-          </FormField>
-          <LoadingButton loading={addingExercise} onClick={handleAddExercise}>Добавить</LoadingButton>
-        </Modal>
+        <ExerciseModal
+          mode="add"
+          form={exForm}
+          nameError={exNameError}
+          loading={addingExercise}
+          onFormChange={(patch) => { setExForm((f) => ({ ...f, ...patch })); if (patch.name !== undefined) setExNameError('') }}
+          onSubmit={handleAddExercise}
+          onClose={() => setExerciseModal(null)}
+        />
       )}
 
       {/* ─── Edit exercise modal ─── */}
       {editExModal && (
-        <Modal title="Редактировать упражнение" onClose={() => setEditExModal(null)}>
-          <div>
-            <span className={s.presetsLabel}>Популярные</span>
-            <div className={s.presets}>
-              {EXERCISE_PRESETS.map((preset) => (
-                <button key={preset} type="button" className={`${s.preset} ${editExForm.name === preset ? s.presetActive : ''}`} onClick={() => setEditExForm((f) => ({ ...f, name: preset }))}>{preset}</button>
-              ))}
-            </div>
-          </div>
-          <FormField label="Название">
-            <input value={editExForm.name} onChange={(e) => setEditExForm((f) => ({ ...f, name: e.target.value }))} enterKeyHint="next" />
-          </FormField>
-          <div className={s.stepperRow}>
-            <Stepper label="Подходы" value={editExForm.sets} onChange={(v) => setEditExForm((f) => ({ ...f, sets: v }))} min={1} max={20} />
-            <Stepper label="Повторения" value={editExForm.reps} onChange={(v) => setEditExForm((f) => ({ ...f, reps: v }))} min={1} max={100} />
-            <Stepper label="Вес (кг)" value={editExForm.weight} onChange={(v) => setEditExForm((f) => ({ ...f, weight: v }))} min={0} max={500} step={2.5} />
-          </div>
-          <FormField label="Заметка (необязательно)">
-            <input value={editExForm.note} onChange={(e) => setEditExForm((f) => ({ ...f, note: e.target.value }))} enterKeyHint="done" />
-          </FormField>
-          <LoadingButton loading={savingEx} onClick={handleUpdateExercise}>Сохранить</LoadingButton>
-        </Modal>
+        <ExerciseModal
+          mode="edit"
+          form={editExForm}
+          nameError=""
+          loading={savingEx}
+          onFormChange={(patch) => setEditExForm((f) => ({ ...f, ...patch }))}
+          onSubmit={handleUpdateExercise}
+          onClose={() => setEditExModal(null)}
+        />
       )}
 
       {/* ─── Payment modal ─── */}

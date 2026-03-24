@@ -1,0 +1,35 @@
+@use '@/styles/variables' as *;
+
+.card {
+  @include card;
+  @include flex-row(12);
+  justify-content: space-between;
+}
+
+.info {
+  @include flex-col(8);
+  flex: 1;
+}
+
+.name {
+  height: 16px;
+  width: 60%;
+  border-radius: $radius-sm;
+}
+
+.status {
+  height: 12px;
+  width: 40%;
+  border-radius: $radius-sm;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn {
+  height: 36px;
+  width: 36px;
+  border-radius: $radius-md;
+}

@@ -298,6 +298,21 @@ func (h *ProgramHandler) UpdateExercise(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *ProgramHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
+	trainerID, err := h.getTrainerID(r)
+	if err != nil {
+		http.Error(w, "trainer not found", http.StatusNotFound)
+		return
+	}
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	program, err := h.repo.Duplicate(id, trainerID)
+	if err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusCreated, program)
+}
+
 func (h *ProgramHandler) DeleteExercise(w http.ResponseWriter, r *http.Request) {
 	trainerID, err := h.getTrainerID(r)
 	if err != nil {
