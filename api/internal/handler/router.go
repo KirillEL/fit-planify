@@ -19,6 +19,7 @@ func NewRouter(
 	botToken string,
 	botSecret string,
 	devMode bool,
+	allowedTrainers []int64,
 ) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -31,9 +32,10 @@ func NewRouter(
 		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type"},
 	}))
 
-	auth := NewAuthHandler(trainerRepo, jwtSecret, botToken, devMode)
+	auth := NewAuthHandler(trainerRepo, clientRepo, jwtSecret, botToken, devMode, allowedTrainers)
 	trainer := NewTrainerHandler(trainerRepo, jwtSecret)
 	client := NewClientHandler(clientRepo, trainerRepo)
+	clientSelf := NewClientSelfHandler(clientRepo, programRepo, jwtSecret)
 	program := NewProgramHandler(programRepo, clientRepo, trainerRepo)
 	payment := NewPaymentHandler(paymentRepo, clientRepo, trainerRepo)
 	notify := NewNotifyHandler(notifyRepo, botSecret)
@@ -73,6 +75,13 @@ func NewRouter(
 		r.Post("/clients/{clientID}/payments", payment.Create)
 		r.Put("/payments/{id}/pay", payment.MarkPaid)
 		r.Get("/payments/unpaid", payment.ListUnpaid)
+	})
+
+	r.Route("/client", func(r chi.Router) {
+		r.Use(clientSelf.Middleware)
+		r.Get("/me", clientSelf.Me)
+		r.Get("/programs", clientSelf.Programs)
+		r.Get("/programs/{programId}", clientSelf.Program)
 	})
 
 	// Public — for clients via invite token

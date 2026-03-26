@@ -1,32 +1,16 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { getClientProgramsByToken } from '../../api/client'
+import { Link } from 'react-router-dom'
+import { getMyPrograms } from '../../api/client'
 import type { Program } from '../../types'
 import s from './ClientProgramListPage.module.scss'
 
-const TOKEN_KEY = 'client_invite_token'
-
 export default function ClientProgramListPage() {
-  const [searchParams] = useSearchParams()
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    const tokenFromUrl = searchParams.get('token')
-    const token = tokenFromUrl || localStorage.getItem(TOKEN_KEY)
-
-    if (tokenFromUrl) {
-      localStorage.setItem(TOKEN_KEY, tokenFromUrl)
-    }
-
-    if (!token) {
-      setError(true)
-      setLoading(false)
-      return
-    }
-
-    getClientProgramsByToken(token)
+    getMyPrograms()
       .then((r) => setPrograms(r.data))
       .catch(() => setError(true))
       .finally(() => setLoading(false))

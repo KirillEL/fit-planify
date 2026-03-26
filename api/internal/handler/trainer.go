@@ -40,6 +40,11 @@ func (h *TrainerHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
+		// Reject client-role tokens from trainer routes
+		if role, ok := claims["role"].(string); ok && role != "trainer" {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
 		telegramID := int64(claims["telegram_id"].(float64))
 		ctx := context.WithValue(r.Context(), trainerIDKey, telegramID)
 		next.ServeHTTP(w, r.WithContext(ctx))

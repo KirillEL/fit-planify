@@ -15,6 +15,7 @@ http.interceptors.response.use(
     const status = error.response?.status
     if (status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('role')
       toastEmitter.emit('Сессия истекла, войдите снова')
     } else if (status === 500) {
       toastEmitter.emit('Ошибка сервера')
@@ -29,11 +30,16 @@ http.interceptors.response.use(
 )
 
 // Auth
-export const authTelegram = (initData: string) =>
-  axios.post<{ token: string }>('/auth/telegram', { init_data: initData })
+export const authTelegram = (initData: string, role: 'trainer' | 'client') =>
+  axios.post<{ token: string }>('/auth/telegram', { init_data: initData, role })
 
 export const authDev = () =>
   axios.post<{ token: string }>('/auth/dev')
+
+// Client self-service (authenticated as client)
+export const getClientMe = () => http.get('/client/me')
+export const getMyPrograms = () => http.get('/client/programs')
+export const getMyProgram = (programId: number) => http.get(`/client/programs/${programId}`)
 
 // Trainer
 export const getMe = () => http.get('/trainer/me')

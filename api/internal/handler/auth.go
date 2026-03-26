@@ -17,18 +17,31 @@ import (
 )
 
 type AuthHandler struct {
-	trainerRepo *repository.TrainerRepo
-	jwtSecret   string
-	botToken    string
-	devMode     bool
+	trainerRepo     *repository.TrainerRepo
+	clientRepo      *repository.ClientRepo
+	jwtSecret       string
+	botToken        string
+	devMode         bool
+	allowedTrainers map[int64]struct{} // empty map = allow all
 }
 
-func NewAuthHandler(trainerRepo *repository.TrainerRepo, jwtSecret, botToken string, devMode bool) *AuthHandler {
-	return &AuthHandler{trainerRepo, jwtSecret, botToken, devMode}
+func NewAuthHandler(
+	trainerRepo *repository.TrainerRepo,
+	clientRepo *repository.ClientRepo,
+	jwtSecret, botToken string,
+	devMode bool,
+	allowedTrainers []int64,
+) *AuthHandler {
+	allowed := make(map[int64]struct{}, len(allowedTrainers))
+	for _, id := range allowedTrainers {
+		allowed[id] = struct{}{}
+	}
+	return &AuthHandler{trainerRepo, clientRepo, jwtSecret, botToken, devMode, allowed}
 }
 
 type telegramAuthRequest struct {
 	InitData string `json:"init_data"`
+	Role     string `json:"role"` // "trainer" or "client"
 }
 
 type telegramUser struct {
@@ -45,23 +58,48 @@ func (h *AuthHandler) TelegramAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Role != "trainer" && req.Role != "client" {
+		http.Error(w, "role must be 'trainer' or 'client'", http.StatusBadRequest)
+		return
+	}
+
 	user, ok := h.validateInitData(req.InitData)
 	if !ok {
 		http.Error(w, "invalid init data", http.StatusUnauthorized)
 		return
 	}
 
-	trainer := &model.Trainer{
-		TelegramID: user.ID,
-		Name:       strings.TrimSpace(user.FirstName + " " + user.LastName),
-		Username:   user.Username,
-	}
-	if err := h.trainerRepo.Upsert(trainer); err != nil {
-		http.Error(w, "db error", http.StatusInternalServerError)
-		return
+	var token string
+	var err error
+
+	switch req.Role {
+	case "trainer":
+		if len(h.allowedTrainers) > 0 {
+			if _, allowed := h.allowedTrainers[user.ID]; !allowed {
+				http.Error(w, "access denied", http.StatusForbidden)
+				return
+			}
+		}
+		trainer := &model.Trainer{
+			TelegramID: user.ID,
+			Name:       strings.TrimSpace(user.FirstName + " " + user.LastName),
+			Username:   user.Username,
+		}
+		if err := h.trainerRepo.Upsert(trainer); err != nil {
+			http.Error(w, "db error", http.StatusInternalServerError)
+			return
+		}
+		token, err = h.generateJWT(user.ID, "trainer", 0)
+
+	case "client":
+		client, dbErr := h.clientRepo.GetByTelegramID(user.ID)
+		if dbErr != nil {
+			http.Error(w, "вы не подключены ни к одному тренеру", http.StatusNotFound)
+			return
+		}
+		token, err = h.generateJWT(user.ID, "client", client.ID)
 	}
 
-	token, err := h.generateJWT(user.ID)
 	if err != nil {
 		http.Error(w, "token error", http.StatusInternalServerError)
 		return
@@ -110,7 +148,7 @@ func (h *AuthHandler) validateInitData(initData string) (*telegramUser, bool) {
 	return &user, true
 }
 
-// DevAuth issues a JWT for a hardcoded dev trainer. Only works when devMode is true.
+// DevAuth issues a trainer JWT for a hardcoded dev trainer. Only works when devMode is true.
 func (h *AuthHandler) DevAuth(w http.ResponseWriter, r *http.Request) {
 	if !h.devMode {
 		http.Error(w, "not available", http.StatusForbidden)
@@ -127,7 +165,7 @@ func (h *AuthHandler) DevAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.generateJWT(1)
+	token, err := h.generateJWT(1, "trainer", 0)
 	if err != nil {
 		http.Error(w, "token error", http.StatusInternalServerError)
 		return
@@ -136,10 +174,14 @@ func (h *AuthHandler) DevAuth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
 
-func (h *AuthHandler) generateJWT(telegramID int64) (string, error) {
+func (h *AuthHandler) generateJWT(telegramID int64, role string, clientID int64) (string, error) {
 	claims := jwt.MapClaims{
 		"telegram_id": telegramID,
+		"role":        role,
 		"exp":         time.Now().Add(30 * 24 * time.Hour).Unix(),
+	}
+	if clientID > 0 {
+		claims["client_id"] = clientID
 	}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(h.jwtSecret))
 }

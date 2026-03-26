@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { getProgram } from '../../api/client'
+import { getMyProgram } from '../../api/client'
 import type { Program } from '../../types'
 import s from './ClientProgramPage.module.scss'
 
@@ -10,7 +10,7 @@ export default function ClientProgramPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getProgram(Number(programId)).then((r) => {
+    getMyProgram(Number(programId)).then((r) => {
       setProgram(r.data)
       setLoading(false)
     })

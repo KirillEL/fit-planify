@@ -1,0 +1,106 @@
+@use '@/styles/variables' as *;
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 0;
+}
+
+.logo {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: $tg-hint;
+  margin: 0 0 40px;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 18px 20px;
+  border: none;
+  border-radius: $radius-lg;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: transform $transition-fast, filter $transition-fast;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    filter: brightness(0.95);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.trainer {
+    background: $tg-button;
+    color: $tg-button-text;
+  }
+
+  &.client {
+    background: $tg-secondary-bg;
+    color: $tg-text;
+  }
+}
+
+.icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.label {
+  flex: 1;
+  text-align: left;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.hint {
+  margin-top: 24px;
+  font-size: 12px;
+  color: $tg-hint;
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

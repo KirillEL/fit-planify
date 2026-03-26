@@ -42,6 +42,12 @@ func (r *ClientRepo) Update(id, trainerID int64, name string) error {
 	return err
 }
 
+func (r *ClientRepo) GetByTelegramID(telegramID int64) (*model.Client, error) {
+	var c model.Client
+	err := r.db.Get(&c, `SELECT * FROM clients WHERE telegram_id = $1`, telegramID)
+	return &c, err
+}
+
 func (r *ClientRepo) GetByInviteToken(token string) (*model.Client, error) {
 	var c model.Client
 	err := r.db.Get(&c, `SELECT * FROM clients WHERE invite_token = $1`, token)
