@@ -11,10 +11,27 @@ $color-danger: #ff453a;
 $color-success: #30d158;
 $color-warning: #ff9f0a;
 
+// Status color aliases (for badges)
+$color-status-connected-bg: rgba(48, 209, 88, 0.12);
+$color-status-connected-fg: #30d158;
+$color-status-pending-bg:   rgba(255, 159, 10, 0.12);
+$color-status-pending-fg:   #ff9f0a;
+
 // Border radius
 $radius-sm: 8px;
 $radius-md: 10px;
 $radius-lg: 12px;
+
+// Shadows
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+// Touch target
+$touch-min: 44px;
+
+// Transitions
+$transition-fast: 150ms ease;
+$transition-base: 220ms ease;
 
 // Mixins
 @mixin flex-col($gap: 0) {
@@ -34,6 +51,7 @@ $radius-lg: 12px;
   background: $tg-secondary-bg;
   border-radius: $radius-lg;
   padding: 14px;
+  box-shadow: $shadow-sm;
 }
 
 @mixin button-base {
@@ -52,4 +70,22 @@ $radius-lg: 12px;
     opacity: 0.6;
     cursor: not-allowed;
   }
+}
+
+@mixin ghost-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: $touch-min;
+  min-height: $touch-min;
+  border-radius: $radius-md;
+  -webkit-tap-highlight-color: transparent;
+  transition: background $transition-fast;
+
+  &:hover:not(:disabled) { background: rgba(0, 0, 0, 0.06); }
+  &:active:not(:disabled) { background: rgba(0, 0, 0, 0.10); transform: scale(0.96); }
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
 }

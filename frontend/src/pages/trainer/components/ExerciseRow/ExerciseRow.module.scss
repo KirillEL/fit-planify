@@ -2,28 +2,12 @@
 
 .actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   align-items: center;
 }
 
 .moveBtn {
-  background: none;
-  border: none;
+  @include ghost-btn;
   color: $tg-hint;
-  font-size: 10px;
-  cursor: pointer;
-  padding: 4px 5px;
-  border-radius: $radius-sm;
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover:not(:disabled) {
-    background: $tg-secondary-bg;
-    color: $tg-text;
-  }
-
-  &:disabled {
-    opacity: 0.25;
-    cursor: not-allowed;
-  }
+  font-size: 14px;
 }

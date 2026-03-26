@@ -120,8 +120,8 @@ export default function ClientsPage() {
             <li key={c.id} className={`${s.clientCard} ${c.telegram_id ? s.connected : s.pending}`}>
               <div className={s.clientInfo} onClick={() => navigate(`/trainer/clients/${c.id}`)}>
                 <span className={s.clientName}>{c.name}</span>
-                <span className={s.clientStatus}>
-                  {c.telegram_id ? '✅ подключён' : '⏳ ожидает подключения'}
+                <span className={`${s.statusBadge} ${c.telegram_id ? s.connected : s.pending}`}>
+                  {c.telegram_id ? 'Подключён' : 'Ожидает'}
                 </span>
               </div>
               <div className={s.clientActions}>

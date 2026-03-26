@@ -34,30 +34,35 @@
   cursor: pointer;
 }
 
-// ─── Tabs ───
+// ─── Tabs — segmented control ───
 
 .tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  background: $tg-secondary-bg;
+  border-radius: $radius-lg;
+  padding: 3px;
+  margin-bottom: 20px;
+  gap: 0;
 }
 
 .tab {
   flex: 1;
-  padding: 10px 14px;
-  border-radius: $radius-md;
+  padding: 9px 14px;
   border: none;
-  background: $tg-secondary-bg;
-  color: $tg-text;
+  background: transparent;
+  border-radius: calc(#{$radius-lg} - 3px);
+  color: $tg-hint;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  opacity: 0.5;
+  transition: all $transition-fast;
+  -webkit-tap-highlight-color: transparent;
 
   &.active {
-    opacity: 1;
+    background: $tg-bg;
+    color: $tg-text;
     font-weight: 600;
-    background: $tg-button;
-    color: $tg-button-text;
+    box-shadow: $shadow-sm;
   }
 }
 

@@ -2,23 +2,50 @@
 
 .programCard {
   @include card;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .programHeader {
-  @include flex-row;
+  display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
   h3 {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
+    flex: 1;
+    padding-right: 8px;
+    line-height: 1.3;
   }
 }
 
 .programActions {
   display: flex;
-  gap: 6px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  @include ghost-btn;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  color: $tg-hint;
+
+  &.danger {
+    color: $color-danger;
+  }
+}
+
+.actionIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.addDayBtn {
+  margin-top: 4px;
 }

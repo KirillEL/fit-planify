@@ -3,21 +3,50 @@
 .dayCard {
   background: $tg-bg;
   border-radius: $radius-md;
-  padding: 10px;
+  padding: 0;
   margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: $shadow-sm;
+  overflow: hidden;
 }
 
 .dayHeader {
-  @include flex-row;
+  display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: center;
+  padding: 10px 8px 10px 14px;
+  background: $tg-secondary-bg;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  position: relative;
+
+  b {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: $tg-button;
+  }
+}
+
+.dayActions {
+  display: flex;
+  gap: 2px;
+}
+
+.dayBody {
+  padding: 10px;
 }
 
 .dayEmpty {
-  font-size: 12px;
+  font-size: 13px;
   color: $tg-hint;
-  padding: 4px 0 8px;
+  padding: 4px 0 10px;
 }
 
 .exerciseTable {
@@ -34,14 +63,14 @@
   }
 
   td {
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     vertical-align: middle;
   }
 }
 
 .note {
-  font-size: 11px;
+  font-size: 12px;
   color: $tg-hint;
   margin-top: 2px;
 }

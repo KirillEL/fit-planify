@@ -21,38 +21,40 @@ export default function DayCard({ day, programId, onEditDay, onDeleteDay, onAddE
     <div className={s.dayCard}>
       <div className={s.dayHeader}>
         <b>{day.title}</b>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div className={s.dayActions}>
           <LoadingButton variant="smSecondary" onClick={() => onEditDay(day, programId)}>✏️</LoadingButton>
           <LoadingButton variant="smDanger" onClick={() => onDeleteDay({ ...day, programId })}>✕</LoadingButton>
         </div>
       </div>
 
-      {exercises.length > 0 ? (
-        <table className={s.exerciseTable}>
-          <thead>
-            <tr><th>Упражнение</th><th>Подх.</th><th>Повт.</th><th>Вес</th><th></th></tr>
-          </thead>
-          <tbody>
-            {exercises.map((e, idx) => (
-              <ExerciseRow
-                key={e.id}
-                exercise={e}
-                isFirst={idx === 0}
-                isLast={idx === exercises.length - 1}
-                noteClass={s.note}
-                onEdit={() => onEditExercise(e, programId, day.id)}
-                onDelete={() => onDeleteExercise({ ...e, programId, dayId: day.id })}
-                onMoveUp={() => onMoveExercise(e.id, 'up', day.id, programId)}
-                onMoveDown={() => onMoveExercise(e.id, 'down', day.id, programId)}
-              />
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p className={s.dayEmpty}>Нет упражнений — нажмите «+ Упражнение»</p>
-      )}
+      <div className={s.dayBody}>
+        {exercises.length > 0 ? (
+          <table className={s.exerciseTable}>
+            <thead>
+              <tr><th>Упражнение</th><th>Подх.</th><th>Повт.</th><th>Вес</th><th></th></tr>
+            </thead>
+            <tbody>
+              {exercises.map((e, idx) => (
+                <ExerciseRow
+                  key={e.id}
+                  exercise={e}
+                  isFirst={idx === 0}
+                  isLast={idx === exercises.length - 1}
+                  noteClass={s.note}
+                  onEdit={() => onEditExercise(e, programId, day.id)}
+                  onDelete={() => onDeleteExercise({ ...e, programId, dayId: day.id })}
+                  onMoveUp={() => onMoveExercise(e.id, 'up', day.id, programId)}
+                  onMoveDown={() => onMoveExercise(e.id, 'down', day.id, programId)}
+                />
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className={s.dayEmpty}>Нет упражнений — нажмите «+ Упражнение»</p>
+        )}
 
-      <LoadingButton variant="sm" onClick={() => onAddExercise(programId, day.id)}>+ Упражнение</LoadingButton>
+        <LoadingButton variant="sm" onClick={() => onAddExercise(programId, day.id)}>+ Упражнение</LoadingButton>
+      </div>
     </div>
   )
 }

@@ -5,32 +5,42 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 12px;
+  padding: 14px;
   border-radius: $radius-md;
   margin-bottom: 8px;
   background: $tg-secondary-bg;
+  border-left: none;
+  position: relative;
+  overflow: hidden;
 
-  &.paid {
-    border-left: 3px solid $color-success;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: $radius-md 0 0 $radius-md;
   }
 
-  &.unpaid {
-    border-left: 3px solid $color-warning;
-  }
+  &.paid::before   { background: $color-success; }
+  &.unpaid::before { background: $color-warning; }
 }
 
 .paymentInfo {
   @include flex-col(2);
   flex: 1;
+  padding-left: 8px;
 }
 
 .paymentAmount {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
 }
 
 .paymentNote {
-  font-size: 12px;
+  font-size: 13px;
   color: $tg-hint;
 }
 
@@ -40,6 +50,7 @@
 }
 
 .paymentStatus {
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
+  font-weight: 500;
 }

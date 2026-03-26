@@ -37,10 +37,22 @@ export default function ProgramCard({
       <div className={s.programHeader}>
         <h3>{program.title}</h3>
         <div className={s.programActions}>
-          <LoadingButton variant="secondary" onClick={() => onDuplicateProgram(program.id)}>📋</LoadingButton>
-          <LoadingButton variant="secondary" onClick={() => onCopyProgram(program)}>📤</LoadingButton>
-          <LoadingButton variant="secondary" onClick={() => onEditProgram(program)}>✏️</LoadingButton>
-          <LoadingButton variant="danger" onClick={() => onDeleteProgram(program)}>🗑</LoadingButton>
+          <button className={s.actionBtn} onClick={() => onDuplicateProgram(program.id)}>
+            <span className={s.actionIcon}>📋</span>
+            <span>Копия</span>
+          </button>
+          <button className={s.actionBtn} onClick={() => onCopyProgram(program)}>
+            <span className={s.actionIcon}>📤</span>
+            <span>Клиент</span>
+          </button>
+          <button className={s.actionBtn} onClick={() => onEditProgram(program)}>
+            <span className={s.actionIcon}>✏️</span>
+            <span>Изм.</span>
+          </button>
+          <button className={`${s.actionBtn} ${s.danger}`} onClick={() => onDeleteProgram(program)}>
+            <span className={s.actionIcon}>🗑</span>
+            <span>Удалить</span>
+          </button>
         </div>
       </div>
 
@@ -58,7 +70,7 @@ export default function ProgramCard({
         />
       ))}
 
-      <LoadingButton onClick={() => onAddDay(program.id)}>+ День</LoadingButton>
+      <LoadingButton className={s.addDayBtn} onClick={() => onAddDay(program.id)}>+ День</LoadingButton>
     </div>
   )
 }

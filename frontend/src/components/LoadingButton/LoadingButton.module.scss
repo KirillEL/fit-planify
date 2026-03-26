@@ -2,6 +2,16 @@
 
 .btn {
   @include button-base;
+  transition: filter $transition-fast, transform $transition-fast;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    filter: brightness(0.95);
+  }
 }
 
 .primary {
@@ -20,22 +30,25 @@
 }
 
 .sm {
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  min-height: 36px;
   background: $tg-button;
   color: $tg-button-text;
 }
 
 .smDanger {
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  min-height: 36px;
   background: $color-danger;
   color: #fff;
 }
 
 .smSecondary {
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  min-height: 36px;
   background: $tg-secondary-bg;
   color: $tg-text;
 }

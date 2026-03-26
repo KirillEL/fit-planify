@@ -35,22 +35,30 @@
   @include card;
   @include flex-row;
   justify-content: space-between;
-  border-left: 3px solid transparent;
-  transition: border-color 0.2s;
+  border-left: none;
+  position: relative;
+  overflow: hidden;
 
-  &.connected {
-    border-left-color: $color-success;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    border-radius: $radius-lg 0 0 $radius-lg;
+    transition: background $transition-base;
   }
 
-  &.pending {
-    border-left-color: $color-warning;
-  }
+  &.connected::before { background: $color-success; }
+  &.pending::before   { background: $color-warning; }
 }
 
 .clientInfo {
-  @include flex-col(2);
+  @include flex-col(4);
   cursor: pointer;
   flex: 1;
+  padding-left: 8px;
 }
 
 .clientName {
@@ -58,9 +66,24 @@
   font-weight: 600;
 }
 
-.clientStatus {
-  font-size: 12px;
-  color: $tg-hint;
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  width: fit-content;
+
+  &.connected {
+    background: $color-status-connected-bg;
+    color: $color-status-connected-fg;
+  }
+
+  &.pending {
+    background: $color-status-pending-bg;
+    color: $color-status-pending-fg;
+  }
 }
 
 .clientActions {
