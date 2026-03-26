@@ -8,6 +8,7 @@ interface Props {
   onEditProgram: (program: Program) => void
   onDeleteProgram: (program: Program) => void
   onDuplicateProgram: (programId: number) => void
+  onCopyProgram: (program: Program) => void
   onAddDay: (programId: number) => void
   onEditDay: (day: WorkoutDay, programId: number) => void
   onDeleteDay: (day: WorkoutDay & { programId: number }) => void
@@ -22,6 +23,7 @@ export default function ProgramCard({
   onEditProgram,
   onDeleteProgram,
   onDuplicateProgram,
+  onCopyProgram,
   onAddDay,
   onEditDay,
   onDeleteDay,
@@ -36,6 +38,7 @@ export default function ProgramCard({
         <h3>{program.title}</h3>
         <div className={s.programActions}>
           <LoadingButton variant="secondary" onClick={() => onDuplicateProgram(program.id)}>📋</LoadingButton>
+          <LoadingButton variant="secondary" onClick={() => onCopyProgram(program)}>📤</LoadingButton>
           <LoadingButton variant="secondary" onClick={() => onEditProgram(program)}>✏️</LoadingButton>
           <LoadingButton variant="danger" onClick={() => onDeleteProgram(program)}>🗑</LoadingButton>
         </div>

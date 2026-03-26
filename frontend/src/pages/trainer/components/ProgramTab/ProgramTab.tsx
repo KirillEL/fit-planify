@@ -12,6 +12,7 @@ interface Props {
   onEditProgram: (program: Program) => void
   onDeleteProgram: (program: Program) => void
   onDuplicateProgram: (programId: number) => void
+  onCopyProgram: (program: Program) => void
   onAddDay: (programId: number) => void
   onEditDay: (day: WorkoutDay, programId: number) => void
   onDeleteDay: (day: WorkoutDay & { programId: number }) => void
@@ -30,6 +31,7 @@ export default function ProgramTab({
   onEditProgram,
   onDeleteProgram,
   onDuplicateProgram,
+  onCopyProgram,
   onAddDay,
   onEditDay,
   onDeleteDay,
@@ -66,6 +68,7 @@ export default function ProgramTab({
           onEditProgram={onEditProgram}
           onDeleteProgram={onDeleteProgram}
           onDuplicateProgram={onDuplicateProgram}
+          onCopyProgram={onCopyProgram}
           onAddDay={onAddDay}
           onEditDay={onEditDay}
           onDeleteDay={onDeleteDay}

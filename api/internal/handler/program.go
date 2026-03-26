@@ -44,17 +44,10 @@ func (h *ProgramHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	programs, err := h.repo.GetByClientID(clientID)
+	programs, err := h.repo.GetByClientIDFull(clientID)
 	if err != nil {
 		http.Error(w, "db error", http.StatusInternalServerError)
 		return
-	}
-	for i := range programs {
-		days, _ := h.repo.GetDays(programs[i].ID)
-		for j := range days {
-			days[j].Exercises, _ = h.repo.GetExercises(days[j].ID)
-		}
-		programs[i].WorkoutDays = days
 	}
 	writeJSON(w, http.StatusOK, programs)
 }
@@ -95,17 +88,11 @@ func (h *ProgramHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *ProgramHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	p, err := h.repo.GetByID(id)
+	p, err := h.repo.GetByIDFull(id)
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-	days, _ := h.repo.GetDays(p.ID)
-	for i, day := range days {
-		exercises, _ := h.repo.GetExercises(day.ID)
-		days[i].Exercises = exercises
-	}
-	p.WorkoutDays = days
 	writeJSON(w, http.StatusOK, p)
 }
 
@@ -311,6 +298,53 @@ func (h *ProgramHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, program)
+}
+
+func (h *ProgramHandler) CopyToClient(w http.ResponseWriter, r *http.Request) {
+	trainerID, err := h.getTrainerID(r)
+	if err != nil {
+		http.Error(w, "trainer not found", http.StatusNotFound)
+		return
+	}
+	id, _ := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+
+	var body struct {
+		ClientID int64 `json:"client_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.ClientID == 0 {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+
+	program, err := h.repo.CopyToClient(id, trainerID, body.ClientID)
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	writeJSON(w, http.StatusCreated, program)
+}
+
+func (h *ProgramHandler) ReorderExercises(w http.ResponseWriter, r *http.Request) {
+	trainerID, err := h.getTrainerID(r)
+	if err != nil {
+		http.Error(w, "trainer not found", http.StatusNotFound)
+		return
+	}
+	dayID, _ := strconv.ParseInt(chi.URLParam(r, "dayID"), 10, 64)
+
+	var body struct {
+		Order []int64 `json:"order"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || len(body.Order) == 0 {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.repo.ReorderExercises(dayID, trainerID, body.Order); err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *ProgramHandler) DeleteExercise(w http.ResponseWriter, r *http.Request) {

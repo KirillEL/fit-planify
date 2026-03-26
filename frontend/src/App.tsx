@@ -7,6 +7,7 @@ import ClientsPage from '@/pages/trainer/ClientsPage'
 import ClientProgramPage from '@/pages/client/ClientProgramPage'
 import ClientProgramListPage from '@/pages/client/ClientProgramListPage'
 import Onboarding from '@/components/Onboarding/Onboarding'
+import GlobalToast from '@/components/GlobalToast/GlobalToast'
 
 declare global {
   interface Window {
@@ -70,6 +71,7 @@ function App() {
 
   return (
     <AppRoot>
+      <GlobalToast />
       {showOnboarding && <Onboarding onDone={handleOnboardingDone} />}
       <BrowserRouter>
         <Routes>

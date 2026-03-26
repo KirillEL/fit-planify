@@ -2,24 +2,23 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   addDay, addExercise, createProgram, deleteDay,
-  deleteExercise, deleteProgram, getClient, getClientPrograms,
+  deleteExercise, deleteProgram, getClient, getClientPrograms, getClients,
   markPaid, createPayment, getPayments,
   updateClient, updateProgram, updateDay, updateExercise,
-  duplicateProgram,
+  duplicateProgram, reorderExercises, copyProgramToClient,
 } from '@/api/client'
 import type { Payment, Program, WorkoutDay, Exercise } from '@/types'
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog'
 import LoadingButton from '@/components/LoadingButton/LoadingButton'
 import Modal from '@/components/Modal/Modal'
 import FormField from '@/components/FormField/FormField'
-import Toast from '@/components/Toast/Toast'
+import { toastEmitter } from '@/lib/toast'
 import ExerciseModal, { type ExerciseForm } from './components/ExerciseModal/ExerciseModal'
 import ProgramTab from './components/ProgramTab/ProgramTab'
 import PaymentsTab from './components/PaymentsTab/PaymentsTab'
 import s from './ClientDetailPage.module.scss'
 
 interface PaymentForm { amount: string; note: string; date: string }
-interface ToastState { message: string; type: 'success' | 'error' }
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -34,7 +33,6 @@ export default function ClientDetailPage() {
     (searchParams.get('tab') as 'program' | 'payments') || 'program'
   )
   const [loading, setLoading] = useState(true)
-  const [toast, setToast] = useState<ToastState | null>(null)
 
   // Edit client name
   const [editClientModal, setEditClientModal] = useState(false)
@@ -54,7 +52,6 @@ export default function ClientDetailPage() {
   const [dayModalForProgram, setDayModalForProgram] = useState<number | null>(null)
   const [dayTitle, setDayTitle] = useState('')
   const [dayTitleError, setDayTitleError] = useState('')
-  const [addingDay, setAddingDay] = useState(false)
 
   // Edit day
   const [editDayModal, setEditDayModal] = useState<{ id: number; title: string; programId: number } | null>(null)
@@ -65,7 +62,6 @@ export default function ClientDetailPage() {
   const [exerciseModal, setExerciseModal] = useState<{ programId: number; dayId: number } | null>(null)
   const [exForm, setExForm] = useState<ExerciseForm>({ name: '', sets: 3, reps: 10, weight: 0, note: '' })
   const [exNameError, setExNameError] = useState('')
-  const [addingExercise, setAddingExercise] = useState(false)
 
   // Edit exercise
   const [editExModal, setEditExModal] = useState<(Exercise & { programId: number; dayId: number }) | null>(null)
@@ -85,8 +81,14 @@ export default function ClientDetailPage() {
 
   const [markingPaidId, setMarkingPaidId] = useState<number | null>(null)
 
-  const showError = (msg: string) => setToast({ message: msg, type: 'error' })
-  const showSuccess = (msg: string) => setToast({ message: msg, type: 'success' })
+  // Copy program to another client
+  const [copyProgramModal, setCopyProgramModal] = useState<Program | null>(null)
+  const [copyTargetClientId, setCopyTargetClientId] = useState<number | null>(null)
+  const [allClients, setAllClients] = useState<import('@/types').Client[]>([])
+  const [copyingProgram, setCopyingProgram] = useState(false)
+
+  const showError = (msg: string) => toastEmitter.emit(msg, 'error')
+  const showSuccess = (msg: string) => toastEmitter.emit(msg, 'success')
 
   useEffect(() => {
     Promise.all([getClient(clientId), getClientPrograms(clientId), getPayments(clientId)])
@@ -148,11 +150,15 @@ export default function ClientDetailPage() {
   }
 
   const handleDeleteProgram = async (program: Program) => {
+    const prevPrograms = programs
+    setPrograms((prev) => prev.filter((p) => p.id !== program.id))
+    setConfirmDeleteProgram(null)
     try {
       await deleteProgram(program.id)
-      setPrograms((prev) => prev.filter((p) => p.id !== program.id))
-      setConfirmDeleteProgram(null)
-    } catch { showError('Не удалось удалить программу') }
+    } catch {
+      setPrograms(prevPrograms)
+      showError('Не удалось удалить программу')
+    }
   }
 
   const handleDuplicateProgram = async (programId: number) => {
@@ -169,18 +175,30 @@ export default function ClientDetailPage() {
 
   const handleAddDay = async () => {
     if (!dayTitle.trim()) { setDayTitleError('Введите название дня'); return }
-    setAddingDay(true)
     const programId = dayModalForProgram!
     const program = programs.find((p) => p.id === programId)!
     const dayNumber = (program.workout_days?.length ?? 0) + 1
+    const tempId = -Date.now()
+    const tempDay: WorkoutDay = { id: tempId, program_id: programId, day_number: dayNumber, title: dayTitle.trim(), exercises: [] }
+
+    setPrograms((prev) => prev.map((p) =>
+      p.id === programId ? { ...p, workout_days: [...(p.workout_days ?? []), tempDay] } : p
+    ))
+    setDayModalForProgram(null)
+
     try {
       const r = await addDay(programId, dayNumber, dayTitle.trim())
       setPrograms((prev) => prev.map((p) =>
-        p.id === programId ? { ...p, workout_days: [...(p.workout_days ?? []), { ...r.data, exercises: [] }] } : p
+        p.id === programId
+          ? { ...p, workout_days: p.workout_days?.map((d) => d.id === tempId ? { ...r.data, exercises: [] } : d) }
+          : p
       ))
-      setDayModalForProgram(null)
-    } catch { showError('Не удалось добавить день') }
-    finally { setAddingDay(false) }
+    } catch {
+      setPrograms((prev) => prev.map((p) =>
+        p.id === programId ? { ...p, workout_days: p.workout_days?.filter((d) => d.id !== tempId) } : p
+      ))
+      showError('Не удалось добавить день')
+    }
   }
 
   const openEditDay = (d: WorkoutDay, programId: number) => { setEditDayTitle(d.title); setEditDayModal({ id: d.id, title: d.title, programId }) }
@@ -202,13 +220,17 @@ export default function ClientDetailPage() {
   }
 
   const handleDeleteDay = async (day: WorkoutDay & { programId: number }) => {
+    const prevPrograms = programs
+    setPrograms((prev) => prev.map((p) =>
+      p.id === day.programId ? { ...p, workout_days: p.workout_days?.filter((d) => d.id !== day.id) } : p
+    ))
+    setConfirmDeleteDay(null)
     try {
       await deleteDay(day.id)
-      setPrograms((prev) => prev.map((p) =>
-        p.id === day.programId ? { ...p, workout_days: p.workout_days?.filter((d) => d.id !== day.id) } : p
-      ))
-      setConfirmDeleteDay(null)
-    } catch { showError('Не удалось удалить день') }
+    } catch {
+      setPrograms(prevPrograms)
+      showError('Не удалось удалить день')
+    }
   }
 
   // --- Exercise ---
@@ -221,19 +243,37 @@ export default function ClientDetailPage() {
 
   const handleAddExercise = async () => {
     if (!exForm.name.trim()) { setExNameError('Введите название упражнения'); return }
-    setAddingExercise(true)
     const { programId, dayId } = exerciseModal!
     const order = (programs.find((p) => p.id === programId)?.workout_days?.find((d) => d.id === dayId)?.exercises?.length ?? 0) + 1
+    const tempId = -Date.now()
+    const tempExercise: Exercise = {
+      id: tempId, workout_day_id: dayId,
+      name: exForm.name.trim(), sets: exForm.sets, reps: exForm.reps,
+      weight: exForm.weight, note: exForm.note.trim(), order,
+    }
+
+    setPrograms((prev) => prev.map((p) =>
+      p.id === programId
+        ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: [...(d.exercises ?? []), tempExercise] } : d) }
+        : p
+    ))
+    setExerciseModal(null)
+
     try {
       const r = await addExercise(dayId, { name: exForm.name.trim(), sets: exForm.sets, reps: exForm.reps, weight: exForm.weight, note: exForm.note.trim(), order })
       setPrograms((prev) => prev.map((p) =>
         p.id === programId
-          ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: [...(d.exercises ?? []), r.data] } : d) }
+          ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: d.exercises?.map((e) => e.id === tempId ? r.data : e) } : d) }
           : p
       ))
-      setExerciseModal(null)
-    } catch { showError('Не удалось добавить упражнение') }
-    finally { setAddingExercise(false) }
+    } catch {
+      setPrograms((prev) => prev.map((p) =>
+        p.id === programId
+          ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: d.exercises?.filter((e) => e.id !== tempId) } : d) }
+          : p
+      ))
+      showError('Не удалось добавить упражнение')
+    }
   }
 
   const openEditExercise = (e: Exercise, programId: number, dayId: number) => {
@@ -259,15 +299,19 @@ export default function ClientDetailPage() {
   }
 
   const handleDeleteExercise = async (ex: Exercise & { programId: number; dayId: number }) => {
+    const prevPrograms = programs
+    setPrograms((prev) => prev.map((p) =>
+      p.id === ex.programId
+        ? { ...p, workout_days: p.workout_days?.map((d) => d.id === ex.dayId ? { ...d, exercises: d.exercises?.filter((e) => e.id !== ex.id) } : d) }
+        : p
+    ))
+    setConfirmDeleteExercise(null)
     try {
       await deleteExercise(ex.id)
-      setPrograms((prev) => prev.map((p) =>
-        p.id === ex.programId
-          ? { ...p, workout_days: p.workout_days?.map((d) => d.id === ex.dayId ? { ...d, exercises: d.exercises?.filter((e) => e.id !== ex.id) } : d) }
-          : p
-      ))
-      setConfirmDeleteExercise(null)
-    } catch { showError('Не удалось удалить упражнение') }
+    } catch {
+      setPrograms(prevPrograms)
+      showError('Не удалось удалить упражнение')
+    }
   }
 
   const handleMoveExercise = async (exerciseId: number, direction: 'up' | 'down', dayId: number, programId: number) => {
@@ -279,12 +323,10 @@ export default function ClientDetailPage() {
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1
     if (swapIdx < 0 || swapIdx >= exercises.length) return
 
-    const updated = exercises.map((e, i) => {
-      if (i === idx) return { ...e, order: exercises[swapIdx].order }
-      if (i === swapIdx) return { ...e, order: exercises[idx].order }
-      return e
-    })
+    const updated = [...exercises];
+    [updated[idx], updated[swapIdx]] = [updated[swapIdx], updated[idx]]
 
+    const prevPrograms = programs
     setPrograms((prev) => prev.map((p) =>
       p.id === programId
         ? { ...p, workout_days: p.workout_days?.map((d) => d.id === dayId ? { ...d, exercises: updated } : d) }
@@ -292,11 +334,35 @@ export default function ClientDetailPage() {
     ))
 
     try {
-      await Promise.all([
-        updateExercise(updated[idx].id, { name: updated[idx].name, sets: updated[idx].sets, reps: updated[idx].reps, weight: updated[idx].weight, note: updated[idx].note, order: updated[idx].order }),
-        updateExercise(updated[swapIdx].id, { name: updated[swapIdx].name, sets: updated[swapIdx].sets, reps: updated[swapIdx].reps, weight: updated[swapIdx].weight, note: updated[swapIdx].note, order: updated[swapIdx].order }),
-      ])
-    } catch { showError('Не удалось изменить порядок') }
+      await reorderExercises(dayId, updated.map((e) => e.id))
+    } catch {
+      setPrograms(prevPrograms)
+      showError('Не удалось изменить порядок')
+    }
+  }
+
+  // --- Copy program ---
+
+  const openCopyModal = async (program: Program) => {
+    setCopyProgramModal(program)
+    setCopyTargetClientId(null)
+    if (allClients.length === 0) {
+      try {
+        const r = await getClients()
+        setAllClients(r.data)
+      } catch { showError('Не удалось загрузить клиентов') }
+    }
+  }
+
+  const handleCopyProgram = async () => {
+    if (!copyProgramModal || !copyTargetClientId) return
+    setCopyingProgram(true)
+    try {
+      await copyProgramToClient(copyProgramModal.id, copyTargetClientId)
+      setCopyProgramModal(null)
+      showSuccess('Программа скопирована')
+    } catch { showError('Не удалось скопировать программу') }
+    finally { setCopyingProgram(false) }
   }
 
   // --- Payment ---
@@ -333,8 +399,6 @@ export default function ClientDetailPage() {
 
   return (
     <div className={s.page}>
-      {toast && <Toast message={toast.message} type={toast.type} onHide={() => setToast(null)} />}
-
       {/* ─── Header ─── */}
       <div className={s.header}>
         <button className={s.backBtn} onClick={() => navigate('/trainer')}>← Назад</button>
@@ -364,6 +428,7 @@ export default function ClientDetailPage() {
           onEditProgram={openEditProgram}
           onDeleteProgram={setConfirmDeleteProgram}
           onDuplicateProgram={handleDuplicateProgram}
+          onCopyProgram={openCopyModal}
           onAddDay={openDayModal}
           onEditDay={openEditDay}
           onDeleteDay={(d) => setConfirmDeleteDay(d)}
@@ -399,7 +464,7 @@ export default function ClientDetailPage() {
           <FormField label="Название дня" error={dayTitleError}>
             <input value={dayTitle} onChange={(e) => { setDayTitle(e.target.value); setDayTitleError('') }} placeholder="День 1 — Ноги" enterKeyHint="done" onKeyDown={(e) => e.key === 'Enter' && handleAddDay()} autoFocus />
           </FormField>
-          <LoadingButton loading={addingDay} onClick={handleAddDay}>Добавить</LoadingButton>
+          <LoadingButton loading={false} onClick={handleAddDay}>Добавить</LoadingButton>
         </Modal>
       )}
 
@@ -429,7 +494,7 @@ export default function ClientDetailPage() {
           mode="add"
           form={exForm}
           nameError={exNameError}
-          loading={addingExercise}
+          loading={false}
           onFormChange={(patch) => { setExForm((f) => ({ ...f, ...patch })); if (patch.name !== undefined) setExNameError('') }}
           onSubmit={handleAddExercise}
           onClose={() => setExerciseModal(null)}
@@ -462,6 +527,23 @@ export default function ClientDetailPage() {
             <input type="date" value={payForm.date} onChange={(e) => setPayForm((f) => ({ ...f, date: e.target.value }))} />
           </FormField>
           <LoadingButton loading={creatingPayment} onClick={handleCreatePayment}>Добавить</LoadingButton>
+        </Modal>
+      )}
+
+      {/* ─── Copy program modal ─── */}
+      {copyProgramModal && (
+        <Modal title="Скопировать программу" onClose={() => setCopyProgramModal(null)}>
+          <FormField label="Выберите клиента">
+            <select value={copyTargetClientId ?? ''} onChange={(e) => setCopyTargetClientId(Number(e.target.value))}>
+              <option value="">— Выберите клиента —</option>
+              {allClients
+                .filter((c) => c.id !== clientId)
+                .map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </FormField>
+          <LoadingButton loading={copyingProgram} onClick={handleCopyProgram} disabled={!copyTargetClientId}>
+            Скопировать
+          </LoadingButton>
         </Modal>
       )}
 

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { toastEmitter } from '@/lib/toast'
 
 const http = axios.create({ baseURL: '/api' })
 
@@ -11,8 +12,17 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (r) => r,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    if (status === 401) {
       localStorage.removeItem('token')
+      toastEmitter.emit('Сессия истекла, войдите снова')
+    } else if (status === 500) {
+      toastEmitter.emit('Ошибка сервера')
+    } else if (status) {
+      const msg = typeof error.response?.data === 'string'
+        ? error.response.data
+        : 'Произошла ошибка'
+      toastEmitter.emit(msg)
     }
     return Promise.reject(error)
   }
@@ -46,6 +56,8 @@ export const getProgram = (id: number) => http.get(`/programs/${id}`)
 export const deleteProgram = (id: number) => http.delete(`/programs/${id}`)
 export const updateProgram = (id: number, title: string) => http.put(`/programs/${id}`, { title })
 export const duplicateProgram = (id: number) => http.post(`/programs/${id}/duplicate`)
+export const copyProgramToClient = (programId: number, targetClientId: number) =>
+  http.post(`/programs/${programId}/copy`, { client_id: targetClientId })
 
 // Days
 export const addDay = (programId: number, day_number: number, title: string) =>
@@ -63,6 +75,9 @@ export const updateExercise = (
   id: number,
   data: { name: string; sets: number; reps: number; weight: number; note: string; order?: number }
 ) => http.put(`/exercises/${id}`, data)
+
+export const reorderExercises = (dayId: number, order: number[]) =>
+  http.put(`/days/${dayId}/exercises/reorder`, { order })
 
 // Payments
 export const getPayments = (clientId: number) =>

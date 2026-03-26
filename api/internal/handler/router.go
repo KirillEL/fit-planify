@@ -58,12 +58,14 @@ func NewRouter(
 		r.Put("/programs/{id}", program.Update)
 		r.Delete("/programs/{id}", program.Delete)
 		r.Post("/programs/{id}/duplicate", program.Duplicate)
+		r.Post("/programs/{id}/copy", program.CopyToClient)
 
 		r.Post("/programs/{programID}/days", program.AddDay)
 		r.Put("/days/{id}", program.UpdateDay)
 		r.Delete("/days/{id}", program.DeleteDay)
 
 		r.Post("/days/{dayID}/exercises", program.AddExercise)
+		r.Put("/days/{dayID}/exercises/reorder", program.ReorderExercises)
 		r.Put("/exercises/{id}", program.UpdateExercise)
 		r.Delete("/exercises/{id}", program.DeleteExercise)
 
