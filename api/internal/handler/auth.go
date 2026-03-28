@@ -17,12 +17,11 @@ import (
 )
 
 type AuthHandler struct {
-	trainerRepo     *repository.TrainerRepo
-	clientRepo      *repository.ClientRepo
-	jwtSecret       string
-	botToken        string
-	devMode         bool
-	allowedTrainers map[int64]struct{} // empty map = allow all
+	trainerRepo *repository.TrainerRepo
+	clientRepo  *repository.ClientRepo
+	jwtSecret   string
+	botToken    string
+	devMode     bool
 }
 
 func NewAuthHandler(
@@ -30,13 +29,8 @@ func NewAuthHandler(
 	clientRepo *repository.ClientRepo,
 	jwtSecret, botToken string,
 	devMode bool,
-	allowedTrainers []int64,
 ) *AuthHandler {
-	allowed := make(map[int64]struct{}, len(allowedTrainers))
-	for _, id := range allowedTrainers {
-		allowed[id] = struct{}{}
-	}
-	return &AuthHandler{trainerRepo, clientRepo, jwtSecret, botToken, devMode, allowed}
+	return &AuthHandler{trainerRepo, clientRepo, jwtSecret, botToken, devMode}
 }
 
 type telegramAuthRequest struct {
@@ -74,12 +68,6 @@ func (h *AuthHandler) TelegramAuth(w http.ResponseWriter, r *http.Request) {
 
 	switch req.Role {
 	case "trainer":
-		if len(h.allowedTrainers) > 0 {
-			if _, allowed := h.allowedTrainers[user.ID]; !allowed {
-				http.Error(w, "access denied", http.StatusForbidden)
-				return
-			}
-		}
 		trainer := &model.Trainer{
 			TelegramID: user.ID,
 			Name:       strings.TrimSpace(user.FirstName + " " + user.LastName),

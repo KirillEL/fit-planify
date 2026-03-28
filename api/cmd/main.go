@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -29,10 +27,6 @@ func main() {
 	botSecret := getEnv("BOT_SECRET", "")
 	port := getEnv("API_PORT", "8080")
 	devMode := os.Getenv("DEV_MODE") == "true"
-	allowedTrainers := parseAllowedTrainers(os.Getenv("ALLOWED_TRAINERS"))
-	if len(allowedTrainers) == 0 {
-		log.Println("WARNING: ALLOWED_TRAINERS is not set — any Telegram user can register as a trainer")
-	}
 
 	db, err := repository.NewPostgres(dbURL)
 	if err != nil {
@@ -52,7 +46,7 @@ func main() {
 		log.Println("WARNING: DEV_MODE is enabled — /auth/dev endpoint is active")
 	}
 
-	r := handler.NewRouter(trainerRepo, clientRepo, programRepo, paymentRepo, notifyRepo, jwtSecret, botToken, botSecret, devMode, allowedTrainers)
+	r := handler.NewRouter(trainerRepo, clientRepo, programRepo, paymentRepo, notifyRepo, jwtSecret, botToken, botSecret, devMode)
 
 	addr := fmt.Sprintf(":%s", port)
 	srv := &http.Server{
@@ -108,22 +102,3 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-func parseAllowedTrainers(raw string) []int64 {
-	if raw == "" {
-		return nil
-	}
-	var ids []int64
-	for _, part := range strings.Split(raw, ",") {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		id, err := strconv.ParseInt(part, 10, 64)
-		if err != nil {
-			log.Printf("WARNING: invalid Telegram ID in ALLOWED_TRAINERS: %q", part)
-			continue
-		}
-		ids = append(ids, id)
-	}
-	return ids
-}
